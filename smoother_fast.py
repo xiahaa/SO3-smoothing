@@ -55,22 +55,19 @@ def solve_inner_with_cvxpy_reference(
 
 
 def tube_smooth_fast(
-    R_meas: np.ndarray,
+    R_meas: List[np.ndarray],
     eps: np.ndarray,
     lam: float,
     mu: float,
     tau: float,
     max_outer: int = 20,
     Delta: float = 0.2,
-    inner: InnerName = "admm",
     rho: float = 1.0,
     inner_max_iter: int = 2000,
-    inner_tol: float = 1e-4,
-    tol: float = 1e-6,
-) -> Tuple[np.ndarray, Dict[str, Any]]:
+    tol_outer: float = 1e-6,
+    tol_inner: float = 1e-4,
+) -> Tuple[List[np.ndarray], Dict[str, Any]]:
     """Tube smoothing with sequential convexification and custom ADMM inner iterations."""
-    if inner != "admm":
-        raise ValueError("Only inner='admm' is supported in smoother_fast")
 
     R_meas = np.asarray(R_meas, dtype=np.float64)
     eps = np.asarray(eps, dtype=np.float64).reshape(-1)
@@ -80,7 +77,7 @@ def tube_smooth_fast(
     if eps.shape[0] != M:
         raise ValueError("eps length must match R_meas")
 
-    H = build_H(M, lam, mu, tau)
+    H = build_H(M, lam, mu, tau, damping=1e-9)
     phi_meas = np.vstack([log_so3(R_meas[i]) for i in range(M)])
     phi_k = phi_meas.copy()
 
@@ -115,7 +112,7 @@ def tube_smooth_fast(
             Delta=Delta,
             rho=rho,
             max_iter=inner_max_iter,
-            tol=inner_tol,
+            tol=tol_inner,
         )
         inner_stats_hist.append(inner_stats)
 
@@ -132,7 +129,7 @@ def tube_smooth_fast(
 
         final_delta_inf = float(np.max(np.abs(delta)))
         outer_elapsed_hist.append(time.perf_counter() - t_outer)
-        if final_delta_inf < tol:
+        if final_delta_inf < tol_outer:
             break
 
     elapsed = time.perf_counter() - total_start
@@ -147,5 +144,6 @@ def tube_smooth_fast(
         "outer_elapsed": outer_elapsed_hist,
         "elapsed_sec": elapsed,
         "final_delta_inf": final_delta_inf,
+        "converged": final_delta_inf < tol_outer,
     }
     return R_hat, info

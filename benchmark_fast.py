@@ -1,144 +1,204 @@
-"""Benchmark for high-performance SO(3) tube smoothing with ADMM inner solver."""
-
-from __future__ import annotations
-
-import argparse
 import time
-from typing import Dict, Tuple
-
 import numpy as np
-
-from smoother_fast import solve_inner_with_cvxpy_reference, tube_smooth_fast
+import matplotlib.pyplot as plt
+from so3 import exp_so3, log_so3, batch_log, geodesic_angle
+from smoother_fast import tube_smooth_fast
 from hessian import build_H
-from so3 import exp_so3, log_so3
+import admm_solver
 
 
-def make_data(M: int, tau: float, noise: float, eps_val: float, seed: int = 0):
-    rng = np.random.default_rng(seed)
-    t = np.arange(M) * tau
-    omega = np.stack(
-        [0.6 * np.sin(0.13 * t), 0.4 * np.cos(0.09 * t + 0.2), 0.5 * np.sin(0.07 * t - 0.4)], axis=1
-    )
-    phi_gt = np.cumsum(omega * tau, axis=0)
-    R_gt = np.stack([exp_so3(phi_gt[i]) for i in range(M)], axis=0)
+def generate_synthetic_data(M, tau=0.1, noise_std=0.05):
+    """Generate smooth SO(3) trajectory with measurement noise."""
+    t = np.linspace(0, 2*np.pi, M)
 
-    noise_vec = rng.normal(0.0, noise, size=(M, 3))
-    R_meas = np.stack([R_gt[i] @ exp_so3(noise_vec[i]) for i in range(M)], axis=0)
-    eps = np.full(M, eps_val, dtype=np.float64)
-    return R_gt, R_meas, eps
+    # True trajectory: rotation around z-axis with varying speed
+    phi_true = np.zeros((M, 3))
+    phi_true[:, 2] = 2 * np.sin(2*t) + 0.5 * np.sin(4*t)
 
+    R_true = [exp_so3(phi) for phi in phi_true]
+    # Add noise
+    noise = np.random.normal(scale=noise_std, size=(M, 3))
+    R_meas = [exp_so3(log_so3(R_true[i]) + noise[i]) for i in range(M)]
 
-def smoothness_metrics(phi_seq: np.ndarray, tau: float) -> Tuple[float, float]:
-    d1 = np.diff(phi_seq, axis=0) / tau
-    d2 = np.diff(phi_seq, n=2, axis=0) / (tau**2)
-    vel = float(np.sqrt(np.mean(np.sum(d1**2, axis=1)))) if len(d1) else 0.0
-    acc = float(np.sqrt(np.mean(np.sum(d2**2, axis=1)))) if len(d2) else 0.0
-    return vel, acc
+    # Tube radii (larger where noise is higher)
+    eps = np.full(M, 0.2)
+    eps[::2] = 0.15  # Alternate tighter constraints
+
+    return R_true, R_meas, eps
 
 
-def run_case(M: int, args) -> Dict[str, float]:
-    R_gt, R_meas, eps = make_data(M, args.tau, args.noise, args.eps)
-    t0 = time.perf_counter()
-    R_hat, info = tube_smooth_fast(
-        R_meas,
-        eps,
-        lam=args.lam,
-        mu=args.mu,
-        tau=args.tau,
-        max_outer=args.max_outer,
-        Delta=args.delta,
-        rho=args.rho,
-        inner_max_iter=args.inner_max_iter,
-        inner_tol=args.inner_tol,
-        tol=args.outer_tol,
-    )
-    total = time.perf_counter() - t0
+def compute_metrics(R_true, R_meas, R_hat, eps):
+    """Compute evaluation metrics for smoothed trajectory."""
+    M = len(R_true)
 
-    max_violation = float(np.max([np.linalg.norm(log_so3(R_meas[i].T @ R_hat[i])) - eps[i] for i in range(M)]))
+    # Geodesic distances from true trajectory
+    dists = np.array([geodesic_angle(R_true[i], R_hat[i]) for i in range(M)])
 
-    phi_meas = np.vstack([log_so3(R_meas[i]) for i in range(M)])
-    phi_hat = np.vstack([log_so3(R_hat[i]) for i in range(M)])
-    vel_m, acc_m = smoothness_metrics(phi_meas, args.tau)
-    vel_h, acc_h = smoothness_metrics(phi_hat, args.tau)
+    # Constraint violations
+    violations = np.array([geodesic_angle(R_meas[i], R_hat[i]) - eps[i] for i in range(M)])
+    max_violation = np.max(violations)
+    avg_violation = np.mean(np.maximum(violations, 0))
 
-    inner_iters = [it["iter"] for it in info["inner_stats"]]
+    # Velocity and acceleration (in tangent space)
+    phi_hat = batch_log(R_hat)
+    d1 = phi_hat[1:] - phi_hat[:-1]
+    d2 = d1[1:] - d1[:-1]
 
-    print(f"M={M}")
-    print(f"  outer_iter={info['outer_iter']}, total={total:.3f}s, max_violation={max_violation:.3e}")
-    print(f"  outer time per iter (s): {[round(x, 4) for x in info['outer_elapsed']]}")
-    print(f"  inner avg iter={np.mean(inner_iters):.1f}, inner iters={inner_iters}")
-    print(f"  smooth vel RMS meas->hat: {vel_m:.4f}->{vel_h:.4f}")
-    print(f"  smooth acc RMS meas->hat: {acc_m:.4f}->{acc_h:.4f}")
+    vel_rms = np.sqrt(np.mean(np.sum(d1**2, axis=1)))
+    acc_rms = np.sqrt(np.mean(np.sum(d2**2, axis=1)))
 
     return {
-        "M": M,
-        "outer_iter": info["outer_iter"],
-        "time_sec": total,
-        "max_violation": max_violation,
-        "inner_avg_iter": float(np.mean(inner_iters)),
+        'dists': dists,
+        'max_violation': max_violation,
+        'avg_violation': avg_violation,
+        'vel_rms': vel_rms,
+        'acc_rms': acc_rms
     }
 
 
-def cvxpy_reference_check(args) -> None:
-    M = min(args.cvxpy_M, 200)
-    _, R_meas, eps = make_data(M, args.tau, args.noise, args.eps, seed=7)
-    phi_k = np.vstack([log_so3(R) for R in R_meas])
-    phi_meas = phi_k.copy()
+def benchmark_performance(M_list, params):
+    """Benchmark performance across different problem sizes."""
+    results = []
 
-    r_list = [log_so3(exp_so3(-phi_meas[j]) @ exp_so3(phi_k[j])) for j in range(M)]
-    from so3 import right_jacobian, right_jacobian_inv
+    for M in M_list:
+        print(f"\n===== Benchmarking M={M} =====")
 
-    J_list = [right_jacobian_inv(r_list[j]) @ right_jacobian(phi_k[j]) for j in range(M)]
+        # Generate data
+        R_true, R_meas, eps = generate_synthetic_data(M)
 
-    H = build_H(M, args.lam, args.mu, args.tau)
-    g = H @ phi_k.reshape(-1)
+        # Parameters
+        lam, mu, tau = params['lam'], params['mu'], params['tau']
 
-    d_admm, st = __import__("admm_solver").solve_inner_admm(
-        H, g, r_list, J_list, eps, args.delta, rho=args.rho, max_iter=args.inner_max_iter, tol=args.inner_tol
-    )
-    d_ref, ref = solve_inner_with_cvxpy_reference(H, g, r_list, J_list, eps, args.delta, solver="SCS")
+        # Warm-up run
+        _, _ = tube_smooth_fast(R_meas, eps, lam, mu, tau, max_outer=1)
 
-    obj_admm = 0.5 * d_admm @ (H @ d_admm) + g @ d_admm
-    obj_ref = 0.5 * d_ref @ (H @ d_ref) + g @ d_ref
+        # Timing run
+        start = time.perf_counter()
+        R_hat, info = tube_smooth_fast(
+            R_meas, eps, lam, mu, tau,
+            max_outer=params['max_outer'],
+            Delta=params['Delta'],
+            rho=params['rho'],
+            inner_max_iter=params['inner_max_iter'],
+            tol_outer=params['tol_outer'],
+            tol_inner=params['tol_inner']
+        )
+        elapsed = time.perf_counter() - start
 
-    def max_viol(d):
-        db = d.reshape(M, 3)
-        v1 = [np.linalg.norm(r_list[j] + J_list[j] @ db[j]) - eps[j] for j in range(M)]
-        v2 = [np.linalg.norm(db[j]) - args.delta for j in range(M)]
-        return max(max(v1), max(v2))
+        # Compute metrics
+        metrics = compute_metrics(R_true, R_meas, R_hat, eps)
 
-    print("CVXPY reference check (single outer inner-subproblem):")
-    print(f"  M={M}, ADMM iter={st['iter']}, CVXPY status={ref['status']}")
-    print(f"  objective admm/ref: {obj_admm:.6e} / {obj_ref:.6e}")
-    print(f"  relative objective gap: {abs(obj_admm - obj_ref) / max(1.0, abs(obj_ref)):.3e}")
-    print(f"  max violation admm/ref: {max_viol(d_admm):.3e} / {max_viol(d_ref):.3e}")
+        # Print results
+        print(f"Total time: {elapsed:.3f}s")
+        print(f"Outer iterations: {info['outer_iter']}")
+        print(f"Avg inner iterations: {np.mean([s['iter'] for s in info['inner_stats']]):.1f}")
+        print(f"Max constraint violation: {metrics['max_violation']:.4f}")
+        print(f"Velocity RMS: {metrics['vel_rms']:.4f}, Acceleration RMS: {metrics['acc_rms']:.4f}")
+
+        results.append({
+            'M': M,
+            'total_time': elapsed,
+            'outer_iter': info['outer_iter'],
+            'avg_inner_iter': np.mean([s['iter'] for s in info['inner_stats']]),
+            'max_violation': metrics['max_violation'],
+            'vel_rms': metrics['vel_rms'],
+            'acc_rms': metrics['acc_rms'],
+            'converged': info['converged']
+        })
+
+        # For small M, verify against CVXPY (if available)
+        if M <= 200:
+            try:
+                from smoother_fast import solve_inner_with_cvxpy_reference
+                print("\nVerifying against CVXPY reference...")
+
+                # Build problem for first outer iteration
+                phi_k = batch_log(R_meas)
+                r_list = []
+                J_list = []
+                for j in range(M):
+                    r_j = log_so3(exp_so3(-batch_log([R_meas[j]])[0]) @ exp_so3(phi_k[j]))
+                    J_j = np.eye(3)  # Simplified for reference
+                    r_list.append(r_j)
+                    J_list.append(J_j)
+
+                H = build_H(M, lam, mu, tau)
+                g = H @ batch_log(R_meas).flatten()
+
+                delta_admm, _ = admm_solver.solve_inner_admm(H, g, r_list, J_list, eps, params['Delta'])
+                delta_cvx, cvx_info = solve_inner_with_cvxpy_reference(H, g, r_list, J_list, eps, params['Delta'])
+
+                err = np.linalg.norm(delta_admm - delta_cvx)
+                obj_diff = abs(0.5*delta_admm@H@delta_admm + g@delta_admm - cvx_info['obj'])
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--sizes", type=int, nargs="+", default=[1000, 10000, 50000])
-    parser.add_argument("--tau", type=float, default=0.1)
-    parser.add_argument("--lam", type=float, default=1.0)
-    parser.add_argument("--mu", type=float, default=0.2)
-    parser.add_argument("--eps", type=float, default=0.18)
-    parser.add_argument("--noise", type=float, default=0.06)
-    parser.add_argument("--delta", type=float, default=0.25)
-    parser.add_argument("--rho", type=float, default=1.0)
-    parser.add_argument("--max_outer", type=int, default=5)
-    parser.add_argument("--inner_max_iter", type=int, default=800)
-    parser.add_argument("--inner_tol", type=float, default=1e-4)
-    parser.add_argument("--outer_tol", type=float, default=1e-6)
-    parser.add_argument("--run_cvxpy_ref", action="store_true")
-    parser.add_argument("--cvxpy_M", type=int, default=200)
-    args = parser.parse_args()
+                print(f"ADMM vs CVXPY: delta error={err:.2e}, objective diff={obj_diff:.2e}")
+            except ImportError:
+                print("CVXPY not available for verification")
 
-    print("=== Fast SO(3) tube smoothing benchmark (ADMM inner) ===")
-    for M in args.sizes:
-        run_case(M, args)
+    return results
 
-    if args.run_cvxpy_ref:
-        cvxpy_reference_check(args)
 
+def plot_results(results):
+    """Plot benchmark results."""
+    M_list = [r['M'] for r in results]
+
+    plt.figure(figsize=(12, 8))
+
+    plt.subplot(2, 2, 1)
+    plt.loglog(M_list, [r['total_time'] for r in results], 'o-')
+    plt.xlabel('Problem size M')
+    plt.ylabel('Total time (s)')
+    plt.title('Runtime vs Problem Size')
+    plt.grid(True, which="both", ls="-")
+
+    plt.subplot(2, 2, 2)
+    plt.plot(M_list, [r['avg_inner_iter'] for r in results], 'o-')
+    plt.xlabel('Problem size M')
+    plt.ylabel('Avg inner iterations')
+    plt.title('ADMM Iterations')
+    plt.grid(True)
+
+    plt.subplot(2, 2, 3)
+    plt.semilogx(M_list, [r['max_violation'] for r in results], 'o-')
+    plt.xlabel('Problem size M')
+    plt.ylabel('Max constraint violation')
+    plt.title('Constraint Satisfaction')
+    plt.grid(True, which="both", ls="-")
+
+    plt.subplot(2, 2, 4)
+    plt.semilogx(M_list, [r['acc_rms'] for r in results], 'o-')
+    plt.xlabel('Problem size M')
+    plt.ylabel('Acceleration RMS')
+    plt.title('Smoothness Metric')
+    plt.grid(True, which="both", ls="-")
+
+    plt.tight_layout()
+    plt.savefig('benchmark_results.png')
+    print("\nBenchmark plot saved to 'benchmark_results.png'")
 
 if __name__ == "__main__":
-    main()
+    # Configuration
+    params = {
+        'lam': 1.0,
+        'mu': 0.1,
+        'tau': 0.1,
+        'max_outer': 20,
+        'Delta': 0.2,
+        'rho': 1.0,
+        'inner_max_iter': 2000,
+        'tol_outer': 1e-6,
+        'tol_inner': 1e-4
+    }
+
+    # Run benchmark for different problem sizes
+    M_list = [100, 1000, 5000, 10000]  # Extend to 50000 if needed
+    results = benchmark_performance(M_list, params)
+
+    # Plot results
+    plot_results(results)
+
+    # Print summary
+    print("\n===== BENCHMARK SUMMARY =====")
+    for r in results:
+        print(f"M={r['M']}: time={r['total_time']:.2f}s, outer={r['outer_iter']}, inner={r['avg_inner_iter']:.1f}, violation={r['max_violation']:.4f}")

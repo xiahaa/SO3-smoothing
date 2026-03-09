@@ -11,7 +11,6 @@ import scipy.sparse.linalg as spla
 
 from hessian import extract_3x3_diag_blocks
 
-
 Array = np.ndarray
 
 
@@ -106,7 +105,8 @@ def solve_inner_admm(
     JTJ = np.einsum("mij,mjk->mik", JT, J)
     B = JTJ + np.eye(3, dtype=np.float64)[None, :, :]
 
-    A = (H + rho * _build_blockdiag_from_blocks(B)).tocsc()
+    # Add small damping to ensure SPD
+    A = (H + rho * _build_blockdiag_from_blocks(B) + 1e-9 * sp.eye(3*M)).tocsc()
     solver_kind, solver_obj = _make_linear_solver(A, prefer=linear_solver)
 
     delta = np.zeros((M, 3), dtype=np.float64)
@@ -172,6 +172,5 @@ def solve_inner_admm(
     }
 
     return delta.reshape(-1), stats
-
 
 __all__ = ["proj_ball", "solve_inner_admm"]
