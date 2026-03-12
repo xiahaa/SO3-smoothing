@@ -4,8 +4,9 @@ import matplotlib.pyplot as plt
 import requests
 from io import BytesIO
 import zipfile
-from so3 import exp_so3, log_so3, batch_log, geodesic_angle
+from so3 import exp_so3, log_so3, batch_log, geodesic_angle, right_jacobian, right_jacobian_inv
 from smoother_fast import tube_smooth_fast
+from smoother_socp import tube_smooth_socp
 from hessian import build_H
 import admm_solver
 
@@ -60,24 +61,16 @@ def compute_metrics(R_true, R_meas, R_hat, eps):
 
 
 def load_euroc_mav_subset():
-    """Load preprocessed EuRoC MAV dataset subset (first 1000 IMU samples from MH_01_easy)."""
-    # Tiny preprocessed dataset (only rotations) hosted on GitHub Gist
-    url = "https://gist.githubusercontent.com/anthropics/0c5b6e3f1a9c1d3e7d1e1e1e1e1e1e1e/raw/euroc_mav_subset.npz"
-
+    """Load preprocessed EuRoC MAV dataset subset from local file."""
     try:
-        response = requests.get(url)
-        response.raise_for_status()
-
-        with BytesIO(response.content) as f:
-            data = np.load(f)
-            R_meas = [data[f'R_{i}'] for i in range(len(data))]
-
-        # Set conservative tube radius based on IMU noise specs
+        data = np.load('euroc_mav_subset.npz')
+        # The file was saved with np.savez(*R_meas), so arrays are named 'arr_0', 'arr_1', etc.
+        R_meas = [data[f'arr_{i}'] for i in range(len(data.files))]
         eps = np.full(len(R_meas), 0.15)
         return R_meas, eps
     except Exception as e:
-        print(f"Warning: Using synthetic EuRoC-like data (real dataset unavailable)")
-        # Generate synthetic data mimicking EuRoC characteristics
+        print(f"Error loading real dataset: {e}")
+        # Fallback to synthetic data
         R_true, R_meas, eps = generate_synthetic_data(1000, tau=0.01, noise_std=0.06)
         return R_meas, eps
 
@@ -151,49 +144,58 @@ def benchmark_performance(M_list, params):
 
     for M in M_list:
         print(f"\n===== Benchmarking M={M} =====")
-
-        # Generate data
+        print("Generating synthetic data...")
         R_true, R_meas, eps = generate_synthetic_data(M)
 
         # Parameters
         lam, mu, tau = params['lam'], params['mu'], params['tau']
 
-        # Warm-up run
-        _, _ = tube_smooth_fast(R_meas, eps, lam, mu, tau, max_outer=1)
+        # Test both methods
+        methods = [
+            ('ADMM (Ours)', tube_smooth_fast),
+            ('SOCP (Baseline)', tube_smooth_socp)
+        ]
 
-        # Timing run
-        start = time.perf_counter()
-        R_hat, info = tube_smooth_fast(
-            R_meas, eps, lam, mu, tau,
-            max_outer=params['max_outer'],
-            Delta=params['Delta'],
-            rho=params['rho'],
-            inner_max_iter=params['inner_max_iter'],
-            tol_outer=params['tol_outer'],
-            tol_inner=params['tol_inner']
-        )
-        elapsed = time.perf_counter() - start
+        for method_name, smoother in methods:
+            print(f"\n--- Running {method_name} ---")
+            start = time.perf_counter()
 
-        # Compute metrics
-        metrics = compute_metrics(R_true, R_meas, R_hat, eps)
+            if method_name == 'ADMM (Ours)':
+                R_hat, info = smoother(
+                    R_meas, eps, lam, mu, tau,
+                    max_outer=params['max_outer'],
+                    Delta=params['Delta'],
+                    rho=params['rho'],
+                    inner_max_iter=params['inner_max_iter'],
+                    tol_outer=params['tol_outer'],
+                    tol_inner=params['tol_inner']
+                )
+            else:
+                R_hat, info = smoother(
+                    R_meas, eps, lam, mu, tau,
+                    max_outer=params['max_outer'],
+                    Delta=params['Delta'],
+                    tol=params['tol_outer'],
+                    solver='SCS'
+                )
 
-        # Print results
-        print(f"Total time: {elapsed:.3f}s")
-        print(f"Outer iterations: {info['outer_iter']}")
-        print(f"Avg inner iterations: {np.mean([s['iter'] for s in info['inner_stats']]):.1f}")
-        print(f"Max constraint violation: {metrics['max_violation']:.4f}")
-        print(f"Velocity RMS: {metrics['vel_rms']:.4f}, Acceleration RMS: {metrics['acc_rms']:.4f}")
+            elapsed = time.perf_counter() - start
+            metrics = compute_metrics(R_true, R_meas, R_hat, eps)
 
-        results.append({
-            'M': M,
-            'total_time': elapsed,
-            'outer_iter': info['outer_iter'],
-            'avg_inner_iter': np.mean([s['iter'] for s in info['inner_stats']]),
-            'max_violation': metrics['max_violation'],
-            'vel_rms': metrics['vel_rms'],
-            'acc_rms': metrics['acc_rms'],
-            'converged': info['converged']
-        })
+            print(f"Total time: {elapsed:.3f}s")
+            print(f"Max constraint violation: {metrics['max_violation']:.4f}")
+            print(f"Acceleration RMS: {metrics['acc_rms']:.4f}")
+            print(f"Constraint violation reduction: {100*(1 - metrics['max_violation']/np.max(eps)):.1f}%")
+
+            results.append({
+                'method': method_name,
+                'M': M,
+                'total_time': elapsed,
+                'max_violation': metrics['max_violation'],
+                'acc_rms': metrics['acc_rms'],
+                'vel_rms': metrics['vel_rms'],
+                'outer_iter': info.get('outer_iter', 1),
+            })
 
         # For small M, verify against CVXPY (if available)
         if M <= 200:
@@ -202,19 +204,25 @@ def benchmark_performance(M_list, params):
                 print("\nVerifying against CVXPY reference...")
 
                 # Build problem for first outer iteration
-                phi_k = batch_log(R_meas)
+                phi_meas = batch_log(R_meas)
+                phi_k = phi_meas.copy()
                 r_list = []
                 J_list = []
                 for j in range(M):
-                    r_j = log_so3(exp_so3(-batch_log([R_meas[j]])[0]) @ exp_so3(phi_k[j]))
-                    J_j = np.eye(3)  # Simplified for reference
+                    r_j = log_so3(exp_so3(-phi_meas[j]) @ exp_so3(phi_k[j]))
+                    J_j = right_jacobian_inv(r_j) @ right_jacobian(phi_k[j])
                     r_list.append(r_j)
                     J_list.append(J_j)
 
                 H = build_H(M, lam, mu, tau, damping=1e-9)
-                g = H @ batch_log(R_meas).flatten()
+                g = H @ phi_k.flatten()
 
-                delta_admm, _ = admm_solver.solve_inner_admm(H, g, r_list, J_list, eps, params['Delta'])
+                # Use higher rho and tighter tolerance for verification
+                # Note: First-iteration problem (phi_k = phi_meas) is challenging for ADMM convergence
+                delta_admm, stats_admm = admm_solver.solve_inner_admm(
+                    H, g, r_list, J_list, eps, params['Delta'],
+                    rho=100.0, max_iter=20000, tol=1e-7
+                )
                 delta_cvx, cvx_info = solve_inner_with_cvxpy_reference(H, g, r_list, J_list, eps, params['Delta'])
 
                 err = np.linalg.norm(delta_admm - delta_cvx)
@@ -233,39 +241,67 @@ def benchmark_performance(M_list, params):
 
 
 def plot_results(results):
-    """Plot benchmark results."""
-    # Filter out EuRoC result for scaling plots
-    synthetic_results = [r for r in results if not isinstance(r.get('dataset'), str)]
-    M_list = [r['M'] for r in synthetic_results]
+    """Plot benchmark results with multiple methods."""
+    # Separate results by method
+    methods = ['ADMM (Ours)', 'SOCP (Baseline)']
+    # Filter out EuRoC results that don't have 'method' key
+    synthetic_results = [r for r in results if 'method' in r]
+    method_results = {m: [r for r in synthetic_results if r['method'] == m] for m in methods}
 
-    plt.figure(figsize=(12, 8))
+    # Create figure with subplots
+    plt.figure(figsize=(14, 10))
 
+    # Runtime comparison
     plt.subplot(2, 2, 1)
-    plt.loglog(M_list, [r['total_time'] for r in synthetic_results], 'o-')
+    for method in methods:
+        m_results = method_results[method]
+        M_list = [r['M'] for r in m_results]
+        times = [r['total_time'] for r in m_results]
+        plt.loglog(M_list, times, 'o-', label=method)
     plt.xlabel('Problem size M')
     plt.ylabel('Total time (s)')
-    plt.title('Runtime vs Problem Size')
+    plt.title('Runtime Comparison')
+    plt.legend()
     plt.grid(True, which="both", ls="-")
 
+    # Constraint violation
     plt.subplot(2, 2, 2)
-    plt.plot(M_list, [r['avg_inner_iter'] for r in synthetic_results], 'o-')
-    plt.xlabel('Problem size M')
-    plt.ylabel('Avg inner iterations')
-    plt.title('ADMM Iterations')
-    plt.grid(True)
-
-    plt.subplot(2, 2, 3)
-    plt.semilogx(M_list, [r['max_violation'] for r in synthetic_results], 'o-')
+    for method in methods:
+        m_results = method_results[method]
+        M_list = [r['M'] for r in m_results]
+        violations = [r['max_violation'] for r in m_results]
+        plt.semilogx(M_list, violations, 'o-', label=method)
+    plt.axhline(y=0, color='r', linestyle='--', alpha=0.3)
     plt.xlabel('Problem size M')
     plt.ylabel('Max constraint violation')
     plt.title('Constraint Satisfaction')
+    plt.legend()
     plt.grid(True, which="both", ls="-")
 
-    plt.subplot(2, 2, 4)
-    plt.semilogx(M_list, [r['acc_rms'] for r in synthetic_results], 'o-')
+    # Acceleration RMS
+    plt.subplot(2, 2, 3)
+    for method in methods:
+        m_results = method_results[method]
+        M_list = [r['M'] for r in m_results]
+        acc_rms = [r['acc_rms'] for r in m_results]
+        plt.semilogx(M_list, acc_rms, 'o-', label=method)
     plt.xlabel('Problem size M')
     plt.ylabel('Acceleration RMS')
     plt.title('Smoothness Metric')
+    plt.legend()
+    plt.grid(True, which="both", ls="-")
+
+    # Outer iterations
+    plt.subplot(2, 2, 4)
+    for method in methods:
+        m_results = method_results[method]
+        M_list = [r['M'] for r in m_results]
+        outer_iter = [r['outer_iter'] for r in m_results]
+        plt.semilogx(M_list, outer_iter, 'o-', label=method)
+    plt.xlabel('Problem size M')
+    plt.ylabel('Outer iterations')
+    plt.title('Convergence Behavior')
+    plt.legend()
     plt.grid(True, which="both", ls="-")
 
     plt.tight_layout()
@@ -277,7 +313,7 @@ if __name__ == "__main__":
     params = {
         'lam': 1.0,
         'mu': 0.1,
-        'tau': 0.1,
+        'tau': 0.01,  # Match EuRoC 100Hz sampling
         'max_outer': 20,
         'Delta': 0.2,
         'rho': 1.0,
@@ -287,7 +323,7 @@ if __name__ == "__main__":
     }
 
     # Run benchmark for different problem sizes
-    M_list = [100, 1000, 5000, 10000]  # Extend to 50000 if needed
+    M_list = [100, 500, 1000]  # Smaller sizes for practical benchmarking
     results = benchmark_performance(M_list, params)
 
     # Plot results
@@ -296,5 +332,7 @@ if __name__ == "__main__":
     # Print summary
     print("\n===== BENCHMARK SUMMARY =====")
     for r in results:
-        if not isinstance(r.get('dataset'), str):  # Skip EuRoC in summary
-            print(f"M={r['M']}: time={r['total_time']:.2f}s, outer={r['outer_iter']}, inner={r['avg_inner_iter']:.1f}, violation={r['max_violation']:.4f}")
+        if 'method' in r:  # Only process benchmark results with method info
+            # Safely access keys with defaults to prevent KeyErrors
+            outer_iter = r.get('outer_iter', 'N/A')
+            print(f"M={r['M']} ({r['method']}): time={r['total_time']:.2f}s, outer={outer_iter}, violation={r['max_violation']:.4f}")

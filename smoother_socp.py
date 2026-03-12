@@ -147,13 +147,13 @@ def tube_smooth_socp(
                 constraints.append(cp.norm(affine, 2) <= eps[i])
             constraints.append(cp.norm(di, 2) <= Delta)
 
-        obj = 0.5 * cp.quad_form(delta, H) + g @ delta
+        obj = 0.5 * cp.quad_form(delta, cp.psd_wrap(H)) + g @ delta
         if slack:
             obj = obj + rho * cp.sum(s)
         prob = cp.Problem(cp.Minimize(obj), constraints)
 
         if solver == "SCS":
-            prob.solve(solver=cp.SCS, verbose=False, eps=1e-5, max_iters=10_000)
+            prob.solve(solver=cp.SCS, verbose=False, eps=1e-3, max_iters=5000)
         else:
             prob.solve(solver=cp.ECOS, verbose=False, abstol=1e-8, reltol=1e-8, feastol=1e-8)
 

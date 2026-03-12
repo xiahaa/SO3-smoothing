@@ -42,7 +42,7 @@ def solve_inner_with_cvxpy_reference(
         constraints.append(cp.norm(r_list[j] + J_list[j] @ dj, 2) <= eps[j])
         constraints.append(cp.norm(dj, 2) <= Delta)
 
-    prob = cp.Problem(cp.Minimize(0.5 * cp.quad_form(delta, H) + g @ delta), constraints)
+    prob = cp.Problem(cp.Minimize(0.5 * cp.quad_form(delta, cp.psd_wrap(H)) + g @ delta), constraints)
     if solver.upper() == "ECOS":
         prob.solve(solver=cp.ECOS, verbose=False)
     else:
