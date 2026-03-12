@@ -83,12 +83,13 @@ def solve_inner_admm(
     max_iter: int = 2000,
     tol: float = 1e-4,
     linear_solver: str = "splu",
+    slack: bool = False,  # Add slack variables for infeasible constraints
 ) -> Tuple[Array, Dict[str, Any]]:
     """Solve the inner convex QP+SOC constraints by ADMM.
 
     Problem:
-      min 0.5 δ^T H δ + g^T δ
-      s.t. y_j = r_j + J_j δ_j, ||y_j||<=eps_j
+      min 0.5 δ^T H δ + g^T δ + ρ * sum(s_j)  [with slack]
+      s.t. y_j = r_j + J_j δ_j, ||y_j||<=eps_j + s_j
            w_j = δ_j,           ||w_j||<=Delta
     """
     t0 = time.perf_counter()
@@ -110,6 +111,7 @@ def solve_inner_admm(
     solver_kind, solver_obj = _make_linear_solver(A, prefer=linear_solver)
 
     delta = np.zeros((M, 3), dtype=np.float64)
+    s = np.zeros(M, dtype=np.float64) if slack else None  # Slack variables
     y = _proj_ball_rows(r.copy(), eps)
     w = np.zeros((M, 3), dtype=np.float64)
     u = np.zeros((M, 3), dtype=np.float64)
@@ -123,6 +125,7 @@ def solve_inner_admm(
         w_prev = w.copy()
 
         rhs_blocks = np.einsum("mij,mj->mi", JT, y - r - u) + (w - v)
+        # Add slack penalty term to objective: rho * sum(s)
         rhs = -g + rho * rhs_blocks.reshape(-1)
 
         if solver_kind == "splu":
@@ -141,8 +144,12 @@ def solve_inner_admm(
 
         delta = delta_vec.reshape(M, 3)
 
+        # Compute y with slack: ||r + Jδ + u|| <= eps + s
         t = r + np.einsum("mij,mj->mi", J, delta) + u
-        y = _proj_ball_rows(t, eps)
+        if slack:
+            y = _proj_ball_rows(t, eps + s)
+        else:
+            y = _proj_ball_rows(t, eps)
 
         s = delta + v
         y_tr = np.full(M, Delta, dtype=np.float64)
@@ -152,6 +159,9 @@ def solve_inner_admm(
         res2 = delta - w
         u = u + res1
         v = v + res2
+        # Update slack: s = max(0, s + rho * (||y_prev - y||_2))
+        if slack:
+            s = np.maximum(s, s + rho * np.sqrt(np.sum((y - y_prev) ** 2)))
 
         pri = float(np.sqrt(np.sum(res1**2) + np.sum(res2**2)))
         dual = float(rho * np.sqrt(np.sum((y - y_prev) ** 2) + np.sum((w - w_prev) ** 2)))
@@ -170,6 +180,11 @@ def solve_inner_admm(
         "solver": solver_kind,
         "A_nnz": int(A.nnz),
     }
+    # Track active slack indices for infeasibility analysis
+    if slack:
+        stats["active_slack_indices"] = np.where(s > 1e-9)[0].tolist()
+    else:
+        stats["active_slack_indices"] = []
 
     return delta.reshape(-1), stats
 

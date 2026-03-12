@@ -9,7 +9,7 @@ import cvxpy as cp
 import numpy as np
 import scipy.sparse as sp
 
-from so3 import exp_so3, log_so3, right_jacobian, right_jacobian_inv
+from so3 import exp_so3, log_so3, right_jacobian, right_jacobian_inv, retract
 
 SolverName = Literal["ECOS", "SCS"]
 
@@ -76,6 +76,10 @@ def tube_smooth_socp(
     solver: SolverName = "ECOS",
     slack: bool = False,
     rho: float = 1e3,
+    gauge_fix: bool = False,  # Add explicit gauge fixing parameter
+    eta_min: float = 0.1,  # Minimum accept ratio for trust region
+    eta_good: float = 0.75,  # Threshold for increasing trust region
+    eta_bad: float = 0.25,  # Threshold for decreasing trust region
 ) -> Tuple[np.ndarray, Dict[str, Any]]:
     """Smooth rotations with sequential convexification and SOCP subproblems.
 
@@ -86,15 +90,19 @@ def tube_smooth_socp(
         mu: Second-order smoothness weight.
         tau: Time step.
         max_outer: Max outer sequential-convexification iterations.
-        Delta: Trust-region radius for each increment block.
+        Delta: Initial trust-region radius for each increment block.
         tol: Stop if ||delta||_inf < tol.
         solver: "ECOS" or "SCS".
         slack: Add nonnegative slack to tube constraints.
         rho: L1 penalty on slack.
+        gauge_fix: If True, anchor first rotation to zero (explicit gauge fixing).
+        eta_min: Minimum accept ratio (default 0.1).
+        eta_good: Threshold for increasing trust region (default 0.75).
+        eta_bad: Threshold for decreasing trust region (default 0.25).
 
     Returns:
         R_hat: Smoothed rotations (M,3,3).
-        info: Diagnostic dictionary.
+        info: Diagnostic dictionary, including 'acceptances' and 'final_Delta'.
     """
     R_meas = np.asarray(R_meas, dtype=float)
     eps = np.asarray(eps, dtype=float).reshape(-1)
@@ -109,6 +117,18 @@ def tube_smooth_socp(
 
     H = build_hessian(M, lam, mu, tau)
 
+    # Principled gauge fixing: penalize first rotation away from zero
+    # This removes gauge freedom by anchoring the reference frame
+    if gauge_fix:
+        # Large penalty on first rotation's first two components
+        gauge_weight = 1e6  # Strong constraint to fix phi[0] ≈ 0
+        # Add to Hessian: modify the (0,0) and (0,1) diagonal entries
+        # Since phi is stacked as [phi_0[0], phi_0[1], phi_0[2], phi_1[0], ...],
+        # indices 0 and 1 correspond to phi[0][0] and phi[0][1]
+        H = H.tocsc()
+        H[0, 0] += gauge_weight
+        H[1, 1] += gauge_weight
+
     objective_hist: List[float] = []
     max_violation_hist: List[float] = []
     avg_violation_hist: List[float] = []
@@ -116,6 +136,10 @@ def tube_smooth_socp(
 
     start_t = time.perf_counter()
     last_delta_norm = np.inf
+    Delta_curr = Delta  # Current trust region radius
+
+    # Track acceptance statistics
+    acceptances: List[int] = []
 
     for outer in range(max_outer):
         r_list: List[np.ndarray] = []
@@ -147,6 +171,10 @@ def tube_smooth_socp(
                 constraints.append(cp.norm(affine, 2) <= eps[i])
             constraints.append(cp.norm(di, 2) <= Delta)
 
+        # Compute current objective before solving
+        phi_vec = _stack_phi(phi_k)
+        obj_current = float(0.5 * phi_vec @ (H @ phi_vec))
+
         obj = 0.5 * cp.quad_form(delta, cp.psd_wrap(H)) + g @ delta
         if slack:
             obj = obj + rho * cp.sum(s)
@@ -161,7 +189,39 @@ def tube_smooth_socp(
             raise RuntimeError(f"SOCP subproblem failed at outer={outer}, status={prob.status}")
 
         delta_val = np.asarray(delta.value).reshape(-1)
-        phi_k = phi_k + _unstack_phi(delta_val)
+
+        # Trust-region logic: evaluate actual vs predicted decrease
+        # Compute candidate phi update
+        phi_candidate = np.vstack([retract(phi_k[i], delta_val[3*i:3*(i+1)]) for i in range(M)])
+        phi_candidate_vec = _stack_phi(phi_candidate)
+        # Actual objective decrease
+        obj_candidate = float(0.5 * phi_candidate_vec @ (H @ phi_candidate_vec))
+        actual_decrease = obj_current - obj_candidate
+        # Predicted decrease from linear model (gradient = H@phi_k + g)
+        # Linear approximation: obj(phi_k + delta) ≈ obj_k + delta^T (H@phi_k + g)
+        # Since g = H @ phi_k, predicted: -delta^T g
+        pred_decrease = -delta_val @ g
+        # Avoid division by zero
+        if abs(pred_decrease) > 1e-12:
+            rho_k = actual_decrease / pred_decrease
+        else:
+            rho_k = np.inf
+
+        # Acceptance rule based on rho_k
+        if rho_k >= eta_min:
+            # Accept update
+            phi_k = phi_candidate
+            acceptances.append(1)
+            # Adjust trust region
+            if rho_k > eta_good:
+                Delta_curr = min(2.0 * Delta_curr, 1.0)  # Increase
+            elif rho_k < eta_bad:
+                Delta_curr = max(0.5 * Delta_curr, 1e-4)  # Decrease
+        else:
+            # Reject update
+            acceptances.append(0)
+            # Decrease trust region more aggressively
+            Delta_curr = max(0.5 * Delta_curr, 1e-4)
 
         if slack:
             slack_hist.append(np.asarray(s.value).reshape(-1))
@@ -193,6 +253,8 @@ def tube_smooth_socp(
         "avg_violation": avg_violation_hist,
         "elapsed_sec": elapsed,
         "final_delta_inf": last_delta_norm,
+        "acceptances": acceptances,  # Track acceptance rate
+        "final_Delta": Delta_curr,  # Final trust region radius
     }
     if slack and slack_hist:
         final_slack = slack_hist[-1]

@@ -144,6 +144,41 @@ def geodesic_angle(R1: np.ndarray, R2: np.ndarray) -> float:
     return float(np.linalg.norm(log_so3(R1.T @ R2)))
 
 
+def retract(phi: np.ndarray, delta: np.ndarray, method: str = "right") -> np.ndarray:
+    """Manifold retraction: update tangent space increment and map back to manifold.
+
+    Args:
+        phi: Current tangent space parameter (axis-angle vector).
+        delta: Increment in tangent space to apply.
+        method: "right" or "left" retraction (default "right").
+
+    Returns:
+        New tangent space parameter phi' such that R' = Exp(phi') is the updated rotation.
+    """
+    phi = np.asarray(phi, dtype=float).reshape(3)
+    delta = np.asarray(delta, dtype=float).reshape(3)
+
+    if method == "right":
+        # Right-invariant: R' = R * exp(delta)
+        # phi' = log(exp(phi) @ exp(delta))
+        # For small angles, this approximates: phi + Jr(phi)^{-1} @ delta
+        R_phi = exp_so3(phi)
+        R_delta = exp_so3(delta)
+        R_new = R_phi @ R_delta
+        phi_new = log_so3(R_new)
+    elif method == "left":
+        # Left-invariant: R' = exp(delta) * R
+        # phi' = log(exp(delta) @ exp(phi))
+        R_phi = exp_so3(phi)
+        R_delta = exp_so3(delta)
+        R_new = R_delta @ R_phi
+        phi_new = log_so3(R_new)
+    else:
+        raise ValueError(f"Unknown retraction method: {method}")
+
+    return phi_new
+
+
 def batch_log(R_seq: Iterable[np.ndarray]) -> np.ndarray:
     """Apply log_so3 on sequence of rotations and stack as (N, 3)."""
     return np.vstack([log_so3(R) for R in R_seq])

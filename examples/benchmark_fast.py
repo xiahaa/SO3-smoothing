@@ -1,17 +1,22 @@
 import time
+import tracemalloc
 import numpy as np
 import matplotlib.pyplot as plt
 import requests
 from io import BytesIO
 import zipfile
+import sys
+sys.path.insert(0, 'src')
+
 from so3 import exp_so3, log_so3, batch_log, geodesic_angle, right_jacobian, right_jacobian_inv
 from smoother_fast import tube_smooth_fast
 from smoother_socp import tube_smooth_socp
 from hessian import build_H
 import admm_solver
+from noise_models import add_log_space_noise
 
 
-def generate_synthetic_data(M, tau=0.1, noise_std=0.05):
+def generate_synthetic_data(M, tau=0.1, noise_std=0.05, seed=0):
     """Generate smooth SO(3) trajectory with measurement noise."""
     t = np.linspace(0, 2*np.pi, M)
 
@@ -19,10 +24,10 @@ def generate_synthetic_data(M, tau=0.1, noise_std=0.05):
     phi_true = np.zeros((M, 3))
     phi_true[:, 2] = 2 * np.sin(2*t) + 0.5 * np.sin(4*t)
 
-    R_true = [exp_so3(phi) for phi in phi_true]
-    # Add noise
-    noise = np.random.normal(scale=noise_std, size=(M, 3))
-    R_meas = [exp_so3(log_so3(R_true[i]) + noise[i]) for i in range(M)]
+    R_true = np.stack([exp_so3(phi) for phi in phi_true], axis=0)
+
+    # Add log-space noise using unified noise model
+    R_meas = add_log_space_noise(R_true, sigma=noise_std, seed=seed)
 
     # Tube radii (larger where noise is higher)
     eps = np.full(M, 0.2)
@@ -61,24 +66,39 @@ def compute_metrics(R_true, R_meas, R_hat, eps):
 
 
 def load_euroc_mav_subset():
-    """Load preprocessed EuRoC MAV dataset subset from local file."""
+    """Load preprocessed EuRoC MAV dataset subset from local file.
+
+    Returns:
+        R_meas: Noisy IMU measurements (not ground truth)
+        eps: Tube radii derived from noise model
+        R_gt: Ground truth for validation (optional)
+    """
     try:
-        data = np.load('euroc_mav_subset.npz')
-        # The file was saved with np.savez(*R_meas), so arrays are named 'arr_0', 'arr_1', etc.
-        R_meas = [data[f'arr_{i}'] for i in range(len(data.files))]
-        eps = np.full(len(R_meas), 0.15)
-        return R_meas, eps
+        data = np.load('data/euroc_mav_subset.npz')
+        # New format with named arrays
+        R_meas = data['R_meas'] if 'R_meas' in data else None
+        R_gt = data['R_gt'] if 'R_gt' in data else None
+        eps = data['eps'] if 'eps' in data else np.full(1000, 0.15)
+
+        if R_meas is None:
+            # Fallback to old format with arr_0, arr_1, etc.
+            print("Warning: Using old NPZ format, consider regenerating dataset")
+            R_meas = [data[f'arr_{i}'] for i in range(len(data.files))]
+            eps = np.full(len(R_meas), 0.15)
+            R_gt = None
+
+        return R_meas, eps, R_gt
     except Exception as e:
         print(f"Error loading real dataset: {e}")
         # Fallback to synthetic data
         R_true, R_meas, eps = generate_synthetic_data(1000, tau=0.01, noise_std=0.06)
-        return R_meas, eps
+        return R_meas, eps, R_true
 
 
 def validate_on_euroc():
     """Validate on EuRoC MAV dataset subset."""
     print("\n===== EuRoC MAV Dataset Validation =====")
-    R_meas, eps = load_euroc_mav_subset()
+    R_meas, eps, R_gt = load_euroc_mav_subset()
     if R_meas is None:
         return None
 
@@ -128,13 +148,21 @@ def validate_on_euroc():
     print(f"Max constraint violation: {max_violation:.4f} (threshold={eps[0]:.2f})")
     print(f"Acceleration RMS: {acc_rms_meas:.4f} → {acc_rms_hat:.4f} ({100*(1-acc_rms_hat/acc_rms_meas):.1f}% reduction)")
 
+    # Ground truth validation if available
+    gt_error_rms = None
+    if R_gt is not None:
+        gt_errors = np.array([geodesic_angle(R_gt[i], R_hat[i]) for i in range(M)])
+        gt_error_rms = np.sqrt(np.mean(gt_errors**2))
+        print(f"Ground truth error RMS: {gt_error_rms:.4f} rad")
+
     return {
         'dataset': 'EuRoC_MH01_easy_subset',
         'M': M,
         'time': elapsed,
         'acc_rms_before': acc_rms_meas,
         'acc_rms_after': acc_rms_hat,
-        'violation': max_violation
+        'violation': max_violation,
+        'gt_error_rms': gt_error_rms
     }
 
 
@@ -145,7 +173,7 @@ def benchmark_performance(M_list, params):
     for M in M_list:
         print(f"\n===== Benchmarking M={M} =====")
         print("Generating synthetic data...")
-        R_true, R_meas, eps = generate_synthetic_data(M)
+        R_true, R_meas, eps = generate_synthetic_data(M, seed=42)  # Fixed seed for reproducibility
 
         # Parameters
         lam, mu, tau = params['lam'], params['mu'], params['tau']
@@ -159,6 +187,7 @@ def benchmark_performance(M_list, params):
         for method_name, smoother in methods:
             print(f"\n--- Running {method_name} ---")
             start = time.perf_counter()
+            tracemalloc.start()
 
             if method_name == 'ADMM (Ours)':
                 R_hat, info = smoother(
@@ -180,9 +209,12 @@ def benchmark_performance(M_list, params):
                 )
 
             elapsed = time.perf_counter() - start
+            current, peak = tracemalloc.get_traced_memory()
+            tracemalloc.stop()
             metrics = compute_metrics(R_true, R_meas, R_hat, eps)
 
             print(f"Total time: {elapsed:.3f}s")
+            print(f"Peak memory: {peak / 1024**2:.2f} MB")
             print(f"Max constraint violation: {metrics['max_violation']:.4f}")
             print(f"Acceleration RMS: {metrics['acc_rms']:.4f}")
             print(f"Constraint violation reduction: {100*(1 - metrics['max_violation']/np.max(eps)):.1f}%")
@@ -191,6 +223,7 @@ def benchmark_performance(M_list, params):
                 'method': method_name,
                 'M': M,
                 'total_time': elapsed,
+                'peak_memory_mb': peak / 1024**2,
                 'max_violation': metrics['max_violation'],
                 'acc_rms': metrics['acc_rms'],
                 'vel_rms': metrics['vel_rms'],
@@ -323,8 +356,15 @@ if __name__ == "__main__":
     }
 
     # Run benchmark for different problem sizes
-    M_list = [100, 500, 1000]  # Smaller sizes for practical benchmarking
+    # True scaling study: from small to very large problems
+    M_list = [100, 500, 1000, 5000, 10000, 50000, 100000]
+
+    # Start memory tracking
+    tracemalloc.start()
     results = benchmark_performance(M_list, params)
+    current, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+    print(f"\nPeak memory usage: {peak / 1024**2:.2f} MB")
 
     # Plot results
     plot_results(results)

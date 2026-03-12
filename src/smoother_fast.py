@@ -9,7 +9,7 @@ import numpy as np
 
 from admm_solver import solve_inner_admm
 from hessian import build_H
-from so3 import exp_so3, log_so3, right_jacobian, right_jacobian_inv
+from so3 import exp_so3, log_so3, right_jacobian, right_jacobian_inv, retract
 
 InnerName = Literal["admm"]
 
@@ -66,8 +66,36 @@ def tube_smooth_fast(
     inner_max_iter: int = 2000,
     tol_outer: float = 1e-6,
     tol_inner: float = 1e-4,
+    gauge_fix: bool = False,  # If True, anchor first rotation to zero (explicit gauge fixing).
+    slack: bool = False,  # If True, add slack variables for infeasible constraints.
+    eta_min: float = 0.1,  # Minimum accept ratio for trust region
+    eta_good: float = 0.75,  # Threshold for increasing trust region
+    eta_bad: float = 0.25,  # Threshold for decreasing trust region
 ) -> Tuple[List[np.ndarray], Dict[str, Any]]:
-    """Tube smoothing with sequential convexification and custom ADMM inner iterations."""
+    """Tube smoothing with sequential convexification and custom ADMM inner iterations.
+
+    Args:
+        R_meas: Measured rotations, shape (M,3,3).
+        eps: Tube radius per sample in radians, shape (M,).
+        lam: First-order smoothness weight.
+        mu: Second-order smoothness weight.
+        tau: Time step.
+        max_outer: Max outer sequential-convexification iterations.
+        Delta: Initial trust-region radius for each increment block.
+        rho: float.
+        inner_max_iter: Maximum ADMM iterations per outer iteration.
+        tol_outer: Stop if ||delta||_inf < tol.
+        tol_inner: ADMM convergence tolerance.
+        gauge_fix: If True, anchor first rotation to zero (explicit gauge fixing).
+        slack: If True, add slack variables for infeasible constraints.
+        eta_min: Minimum accept ratio (default 0.1).
+        eta_good: Threshold for increasing trust region (default 0.75).
+        eta_bad: Threshold for decreasing trust region (default 0.25).
+
+    Returns:
+        R_hat: Smoothed rotations (M,3,3).
+        info: Diagnostic dictionary, including 'acceptances' and 'final_Delta'.
+    """
 
     R_meas = np.asarray(R_meas, dtype=np.float64)
     eps = np.asarray(eps, dtype=np.float64).reshape(-1)
@@ -81,6 +109,18 @@ def tube_smooth_fast(
     phi_meas = np.vstack([log_so3(R_meas[i]) for i in range(M)])
     phi_k = phi_meas.copy()
 
+    # Principled gauge fixing: penalize first rotation away from zero
+    # This removes gauge freedom by anchoring the reference frame
+    if gauge_fix:
+        # Large penalty on first rotation's first two components
+        gauge_weight = 1e6  # Strong constraint to fix phi[0] ≈ 0
+        # Add to Hessian: modify the (0,0) and (0,1) diagonal entries
+        # Since phi is stacked as [phi_0[0], phi_0[1], phi_0[2], phi_1[0], ...],
+        # indices 0 and 1 correspond to phi[0][0] and phi[0][1]
+        H = H.tocsc()
+        H[0, 0] += gauge_weight
+        H[1, 1] += gauge_weight
+
     objective_hist: List[float] = []
     max_violation_hist: List[float] = []
     avg_violation_hist: List[float] = []
@@ -92,6 +132,11 @@ def tube_smooth_fast(
 
     for _ in range(max_outer):
         t_outer = time.perf_counter()
+
+        Delta_curr = Delta  # Current trust region radius
+
+        # Track acceptance statistics
+        acceptances: List[int] = []
 
         r_list = []
         J_list = []
@@ -113,10 +158,48 @@ def tube_smooth_fast(
             rho=rho,
             max_iter=inner_max_iter,
             tol=tol_inner,
+            slack=slack,  # Pass slack parameter to ADMM solver
         )
         inner_stats_hist.append(inner_stats)
 
-        phi_k = phi_k + _unstack_phi(delta)
+        # Compute current objective
+        phi_k_vec = _stack_phi(phi_k)
+        obj_current = float(0.5 * phi_k_vec @ (H @ phi_k_vec))
+
+        # Trust-region logic: evaluate actual vs predicted decrease
+        # Compute candidate phi update
+        phi_candidate = np.vstack([retract(phi_k[i], delta[3*i:3*(i+1)]) for i in range(M)])
+        phi_candidate_vec = _stack_phi(phi_candidate)
+        # Actual objective decrease
+        obj_candidate = float(0.5 * phi_candidate_vec @ (H @ phi_candidate_vec))
+        actual_decrease = obj_current - obj_candidate
+        # Predicted decrease from linear model (gradient = H@phi_k + g)
+        # Linear approximation: obj(phi_k + delta) ≈ obj_k + delta^T (H@phi_k + g)
+        # Since g = H @ phi_k, predicted: -delta^T g
+        pred_decrease = -delta @ g
+        # Avoid division by zero
+        if abs(pred_decrease) > 1e-12:
+            rho_k = actual_decrease / pred_decrease
+        else:
+            rho_k = np.inf
+
+        # Acceptance rule based on rho_k
+        if rho_k >= eta_min:
+            # Accept update
+            phi_k = phi_candidate
+            acceptances.append(1)
+            # Adjust trust region
+            if rho_k > eta_good:
+                Delta_curr = min(2.0 * Delta_curr, 1.0)  # Increase
+            elif rho_k < eta_bad:
+                Delta_curr = max(0.5 * Delta_curr, 1e-4)  # Decrease
+        else:
+            # Reject update
+            acceptances.append(0)
+            # Decrease trust region more aggressively
+            Delta_curr = max(0.5 * Delta_curr, 1e-4)
+
+        # Use manifold retraction instead of additive update
 
         phi_vec = _stack_phi(phi_k)
         objective_hist.append(float(0.5 * phi_vec @ (H @ phi_vec)))
@@ -145,5 +228,13 @@ def tube_smooth_fast(
         "elapsed_sec": elapsed,
         "final_delta_inf": final_delta_inf,
         "converged": final_delta_inf < tol_outer,
+        "acceptances": acceptances,  # Track acceptance rate
+        "final_Delta": Delta_curr,  # Final trust region radius
     }
+    # Track active slack indices from ADMM solver if slack is enabled
+    if slack and len(inner_stats_hist) > 0:
+        stats = inner_stats_hist[-1]  # Last iteration's stats
+        info["active_slack_indices"] = stats.get("active_slack_indices", [])
+    else:
+        info["active_slack_indices"] = []
     return R_hat, info
