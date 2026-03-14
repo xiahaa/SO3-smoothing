@@ -1,0 +1,238 @@
+\documentclass[letterpaper, 10 pt, conference]{ieeeconf}
+
+% IEEE conference packages
+\IEEEoverridecommandlockouts
+\overrideIEEEmargins
+
+% Packages
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{cite}
+\usepackage{bm}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+\usepackage{xcolor}
+
+% Theorem environments
+\usepackage{amsthm}
+\newtheorem{lemma}{Lemma}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}{Proposition}
+\newtheorem{remark}{Remark}
+
+% Custom commands
+\newcommand{\SO}{\mathrm{SO}(3)}
+\newcommand{\SE}{\mathrm{SE}(3)}
+\newcommand{\vect}[1]{\boldsymbol{#1}}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+% Title information
+\title{\LARGE \bf
+Hard-Constrained SO(3) Tube Smoothing via Sequential Convexification and Structured ADMM
+}
+
+\author{Author One$^{1}$ and Author Two$^{2}$%
+\thanks{$^{1}$Author One is with Department of Electrical Engineering, University Name, City, Country. Email: author1@university.edu}%
+\thanks{$^{2}$Author Two is with Department of Robotics, University Name, City, Country. Email: author2@university.edu}%
+}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+\pagestyle{empty}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\begin{abstract}
+
+We present an open-source implementation of hard-constrained rotation smoothing on $\SO$ that guarantees smoothed estimates remain within measurement-derived geodesic tubes. Unlike existing approaches that use soft constraints or penalty methods, our formulation enforces hard bounds specified by sensor error characteristics. We employ sequential convexification with trust-region management to handle the nonlinear manifold structure, and develop a custom ADMM solver that exploits the problem's block-banded Hessian structure for efficiency. Theoretical analysis provides convergence guarantees and constraint violation bounds. Comprehensive experimental validation on synthetic problems and real EuRoC MAV datasets demonstrates practical applicability. Comparisons with GTSAM and Ceres show our method provides unique hard constraint guarantees with competitive speed, achieving 5--10$\times$ speedup over generic SOCP solvers while maintaining constraint feasibility. All code and benchmarks are available at \url{https://github.com/username/SO3-smoothing}.
+
+\end{abstract}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction}
+\label{sec:introduction}
+
+Rotation smoothing is a fundamental problem in robotics and computer vision, where sequences of noisy rotation measurements must be denoised while preserving smooth motion. Applications span camera pose estimation, attitude control, inertial navigation, and 3D reconstruction, where rotation data comes from sensors such as IMUs, visual odometry, or structure-from-motion pipelines.
+
+Traditional approaches to rotation smoothing typically assume Gaussian noise models and minimize energy functions penalizing angular velocity and acceleration. However, many practical scenarios involve bounded-error constraints where sensor specifications, calibration uncertainty, or safety requirements mandate that smoothed estimates remain within known geodesic bounds from the measurements. This set-membership formulation, first introduced in optimal estimation theory for linear systems, has received limited attention for nonlinear manifolds such as $\SO$.
+
+The challenges in $\SO$ rotation smoothing are threefold. First, the nonlinear manifold structure precludes direct application of linear smoothing techniques. Second, hard tube constraints make the optimization problem non-convex and computationally challenging. Third, the requirement to maintain feasibility with respect to all constraints demands careful handling of the manifold geometry during optimization.
+
+\subsection{Contributions}
+
+We present a bounded-noise tube smoothing algorithm for $\SO$ that addresses these challenges. Our \textbf{primary contribution} is an \textbf{efficient open-source implementation} of hard-constrained rotation smoothing that bridges the gap between the speed of existing libraries (e.g., GTSAM) and the constraint satisfaction of generic nonlinear programming.
+
+Specifically, we contribute:
+
+\textbf{1. Set-membership tube smoothing with hard constraints.} We formulate rotation smoothing as a bounded-noise estimation problem where each smoothed output must lie within a geodesic ball of radius $\epsilon_i$ around the corresponding measurement. Unlike existing approaches that use robust loss functions or penalty methods, we enforce hard constraints suitable for safety-critical applications.
+
+\textbf{2. Sequential convexification with theoretical guarantees.} We employ local retractions on the manifold with trust-region management, providing convergence guarantees and constraint violation bounds. The trust region dynamically adjusts based on actual-to-predicted improvement ratios.
+
+\textbf{3. Structured ADMM solver.} We design a custom ADMM solver that exploits the block-banded structure of the smoothing Hessian, enabling efficient sparse linear solves. The implementation includes warm-starting, adaptive parameters, and KKT verification.
+
+\textbf{4. Comprehensive experimental validation.} We provide extensive benchmarks on synthetic problems and real EuRoC MAV data, including ablation studies, comparisons with GTSAM and Ceres, and reproducible evaluation protocols.
+
+\subsection{Key Results}
+
+Our implementation achieves:
+\begin{itemize}
+\item \textbf{Hard constraint satisfaction:} Guaranteed feasibility with violations $<10^{-3}$ rad
+\item \textbf{Competitive speed:} 0.5--10s for problems with $M$=100--1000 rotations
+\item \textbf{Speedup over baselines:} 5--10$\times$ faster than generic SOCP solvers
+\item \textbf{Real-world validation:} Tested on 5 EuRoC MAV sequences with consistent performance
+\end{itemize}
+
+\subsection{Paper Organization}
+
+Section~\ref{sec:related} reviews related work. Section~\ref{sec:methods} presents our formulation and solver. Section~\ref{sec:theory} provides theoretical analysis. Section~\ref{sec:experiments} describes experiments. Section~\ref{sec:results} presents results. Section~\ref{sec:conclusion} concludes.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Related Work}
+\label{sec:related}
+
+\subsection{Rotation Smoothing}
+
+Rotation smoothing on $\SO$ has been extensively studied. Boumal et al.\cite{boumal} established foundational results on optimization on manifolds. Recent works include spline-based approaches\cite{splines}, factor graph formulations\cite{gtsam}, and deep learning methods\cite{deep}. However, most existing approaches assume Gaussian noise and use unconstrained or soft-constrained formulations.
+
+\subsection{Set-Membership Estimation}
+
+Set-membership or bounded-error estimation dates to the 1960s\cite{schweppe}. For linear systems, efficient algorithms exist using ellipsoidal or polytopic sets. Extensions to nonlinear systems typically use interval analysis or sampling-based approaches. Our work applies set-membership concepts to the specific problem of rotation smoothing on $\SO$.
+
+\subsection{Tube MPC and Smoothing}
+
+Tube Model Predictive Control (MPC)\cite{tube_mpc} maintains system state within tubes around nominal trajectories. Recent work has applied similar concepts to trajectory optimization\cite{tube_trajopt}. Our approach differs in focusing on the smoothing (estimation) problem rather than control, and in specifically addressing the $\SO$ manifold structure.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Methods}
+\label{sec:methods}
+
+\subsection{Problem Formulation}
+
+Given a sequence of noisy rotation measurements $R_{\text{meas},i} \in \SO$ for $i = 0, \ldots, M-1$, and per-measurement tube radii $\epsilon_i > 0$, we seek smoothed rotations $R_i \in \SO$ that:
+
+\begin{enumerate}
+\item Satisfy tube constraints: $\|\log(R_{\text{meas},i}^T R_i)\|_2 \leq \epsilon_i$
+\item Minimize smoothness cost (angular velocity and acceleration)
+\end{enumerate}
+
+We parameterize rotations using the exponential map:
+\begin{equation}
+R_i = \exp(\phi_i^\wedge), \quad \phi_i \in \mathbb{R}^3
+\end{equation}
+
+The optimization problem is:
+\begin{align}
+\min_{\phi \in \mathbb{R}^{3M}} \quad & \frac{1}{2} \phi^T H \phi \label{eq:objective} \\
+\text{s.t.} \quad & \|r_i(\phi_i)\|_2 \leq \epsilon_i, \quad i = 0, \ldots, M-1 \nonumber
+\end{align}
+
+where $H$ is the smoothness Hessian and $r_i(\phi_i) = \log(R_{\text{meas},i}^T \exp(\phi_i^\wedge))$.
+
+\subsection{Smoothness Hessian}
+
+The Hessian combines first and second-order differences:
+\begin{equation}
+H = \frac{\lambda}{\tau} (D_1^T D_1 \otimes I_3) + \frac{\mu}{\tau^3} (D_2^T D_2 \otimes I_3)
+\end{equation}
+
+where $D_1$ and $D_2$ are first and second-order difference matrices, $\lambda$ and $\mu$ are weights, and $\tau$ is the time step.
+
+\subsection{Sequential Convexification}
+
+Since constraints are nonlinear, we linearize at each iteration. At iterate $\phi^k$, the constraint becomes:
+\begin{equation}
+\|r_i + J_i \delta_i\|_2 \leq \epsilon_i
+\end{equation}
+
+where $r_i = r_i(\phi_i^k)$ and $J_i = J_r^{-1}(r_i) J_r(\phi_i^k)$ is the Jacobian.
+
+We add trust-region constraints:
+\begin{equation}
+\|\delta_i\|_2 \leq \Delta
+\end{equation}
+
+The subproblem is a convex SOCP solved via ADMM.
+
+\subsection{Structured ADMM Solver}
+
+The ADMM formulation splits the problem:
+\begin{align}
+\min_{\delta, y, w} \quad & \frac{1}{2} \delta^T H \delta + g^T \delta \\
+\text{s.t.} \quad & y_j = r_j + J_j \delta_j, \quad \|y_j\| \leq \epsilon_j \nonumber \\
+& w_j = \delta_j, \quad \|w_j\| \leq \Delta \nonumber
+\end{align}
+
+ADMM iterations:
+\begin{enumerate}
+\item $\delta$-update: Solve sparse linear system $(H + \rho A^T A) \delta = -g + \rho A^T (z - u)$
+\item $y$-update: Project to $L_2$ balls (parallelizable)
+\item $w$-update: Project to trust region (parallelizable)
+\item Dual update: Standard ADMM
+\end{enumerate}
+
+The linear system is sparse and banded, solved efficiently via sparse LU.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% THEORY SECTION
+\input{sections/theory_detailed}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% EXPERIMENTS SECTION
+\input{sections/experiments_complete}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Conclusion}
+\label{sec:conclusion}
+
+We presented an efficient open-source implementation of hard-constrained SO(3) tube smoothing. Our approach guarantees that smoothed estimates remain within measurement-derived geodesic tubes, making it suitable for safety-critical applications where error bounds are specified by sensor characteristics.
+
+\subsection{Summary}
+
+Our method provides:
+\begin{itemize}
+\item Hard constraint satisfaction with theoretical guarantees
+\item Competitive speed (5--10$\times$ faster than generic SOCP)
+\item Comprehensive validation on synthetic and real data
+\item Comparison with state-of-the-art (GTSAM, Ceres)
+\end{itemize}
+
+\subsection{Limitations}
+
+\begin{itemize}
+\item Convergence to strict tolerance ($10^{-6}$) can be slow; practical use benefits from relaxed tolerances ($10^{-4}$)
+\item Scaling tested up to $M=1000$; very large problems ($M > 10^4$) may require multi-scale initialization
+\item Single-threaded implementation; GPU acceleration could provide further speedups
+\end{itemize}
+
+\subsection{Future Work}
+\begin{itemize}
+\item Extension to SE(3) for full pose smoothing
+\item Multi-scale initialization for faster convergence
+\item GPU-accelerated projections for larger problems
+\item Online/streaming formulations for real-time applications
+\end{itemize}
+
+\subsection{Reproducibility}
+
+All code, data, and benchmarks are available at \url{https://github.com/username/SO3-smoothing}. The repository includes:
+\begin{itemize}
+\item Complete implementation (Python)
+\item Reproducible benchmark scripts
+\item EuRoC data preprocessing tools
+\item LaTeX source for this paper
+\end{itemize}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section*{Acknowledgments}
+
+This work was supported by [funding sources]. We thank the EuRoC MAV dataset authors for providing the real-world validation data.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+
+\end{document}
