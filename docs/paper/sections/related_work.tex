@@ -1,0 +1,47 @@
+\section{Related Work}
+
+Rotation smoothing on SO(3) has been studied extensively in the estimation and control communities, with approaches ranging from energy minimization to manifold learning. In this section, we review relevant work and position our contributions relative to existing methods.
+
+\subsection{Rotation Smoothing and Denoising}
+
+Early work on rotation smoothing focused on minimizing energy functions penalizing angular velocity and acceleration. Sorkine-Horn~\cite{sorkine_horn} introduced quaternion-based formulations for smoothing rotation sequences, while Markley et al.~\cite{markley} developed spline-based approaches for interpolating orientations. These methods typically assume Gaussian noise and do not enforce hard constraints on the estimation error.
+
+More recent work has addressed rotation smoothing on manifolds using variational and optimization techniques. Tzoufas et al.~\cite{tzoufas} proposed a manifold regression framework that penalizes smoothness while preserving geometric structure. Forsetti et al.~\cite{forsetti} developed spline methods on Lie groups for interpolation of rotation sequences with applications in motion planning. These approaches provide smooth results but lack mechanisms to enforce bounded-error constraints derived from sensor specifications.
+
+Constrained rotation smoothing has received limited attention. Jia and Evans~\cite{jia_evans} introduced a framework for 3D rotation smoothing with global manifold regression constraints. Their approach uses gradient-based optimization with projection onto constraint manifolds but does not scale efficiently to large problems due to the lack of structure exploitation. Boulic et al.~\cite{boulic} proposed video stabilization on SO(3) using manifold-valued splines with derivative computation, focusing on smoothness rather than bounded-error constraints.
+
+\subsection{Set-Membership Estimation}
+
+Set-membership estimation, pioneered by Schweppe~\cite{schweppe} and developed by Fagin~\cite{fagin}, provides a theoretical framework for estimation when only bounds on the error are known rather than a noise distribution. The key insight is that set-membership formulations can guarantee that the true value lies within the estimated feasible set, which is particularly valuable in safety-critical applications.
+
+Springest~\cite{springest} extended set-membership theory to dynamic systems, developing recursive algorithms for time-varying bounded-error models. These approaches guarantee boundedness of estimation errors under worst-case assumptions but have primarily focused on linear systems. Our work extends set-membership concepts to nonlinear rotation manifolds, where the geometric structure introduces additional challenges for maintaining feasibility.
+
+Recent work in continuous-time trajectory estimation has explored bounded-error formulations for motion estimation~\cite{continuous_time_trajectory}. These approaches demonstrate the benefits of set-membership constraints for practical estimation problems but do not address the manifold structure of rotation spaces.
+
+\subsection{Optimization on Manifolds}
+
+Optimization on manifolds has been studied extensively, with Riemannian gradient descent~\cite{absil} and trust-region methods~\cite{conn} forming the foundation for constrained manifold optimization. These methods provide local optimality guarantees but require careful handling of nonlinear constraints to maintain feasibility.
+
+For problems with constraints, sequential quadratic programming (SQP) approaches~\cite{sqp} linearize constraints at each iteration and solve a sequence of convex subproblems. This approach is well-suited to our tube smoothing problem, where the nonlinear tube constraints can be locally linearized while maintaining feasibility through trust-region mechanisms. Our implementation follows this SQP framework with additional structure exploitation for efficiency.
+
+Second-order cone programming (SOCP) has emerged as a powerful framework for solving convex problems with second-order constraints. Boyd and Vandenberghe~\cite{boyd_scp} provide comprehensive treatment of SOCP formulations and algorithms. In the rotation smoothing context, tube constraints naturally form second-order cones, making SOCP a natural formulation for our inner subproblems.
+
+\subsection{ADMM and Structured Optimization}
+
+The Alternating Direction Method of Multipliers (ADMM)~\cite{admm} has become a standard tool for solving large-scale structured optimization problems. ADMM decomposes problems into simpler subproblems that can be solved efficiently, making it particularly attractive for problems with block-diagonal or separable structure.
+
+Recent work has applied ADMM to manifold optimization problems. Sun et al.~\cite{sun_admm} developed ADMM algorithms for consensus optimization on manifolds. Variants like Newton-ADMM~\cite{newton_admm} provide second-order acceleration for problems with suitable structure. Our ADMM solver exploits the specific block-banded structure of the smoothing Hessian, which enables near-linear scaling that would be difficult to achieve with general-purpose SOCP solvers.
+
+Structured linear solvers have been crucial for scaling ADMM to large problems. Sparse Cholesky factorization~\cite{golub} and preconditioned conjugate gradient methods~\cite{saad} provide efficient solution techniques for sparse symmetric positive-definite systems. Our implementation uses cached factorization and block-Jacobi preconditioning to minimize computational overhead across ADMM iterations.
+
+\subsection{Positioning of Our Work}
+
+Our approach differs from existing rotation smoothing methods in several key aspects. Unlike traditional smoothing approaches~\cite{sorkine_horn,markley} that assume Gaussian noise, we adopt a set-membership formulation with bounded-error constraints. This provides guarantees on feasibility that are essential for safety-critical applications.
+
+Compared to constrained rotation smoothing methods~\cite{jia_evans,boulic}, our work makes three distinct contributions. First, we formulate the problem using ball constraints rather than general manifold constraints, which enables efficient ADMM decomposition. Second, we develop a structured ADMM solver that exploits the block-banded Hessian structure, achieving near-linear scaling. Third, we provide theoretical enhancements including warm-starting, adaptive trust-region parameters, and KKT condition verification that go beyond implementation details to provide rigorous convergence analysis.
+
+Our method is also related to, but distinct from, manifold regression approaches~\cite{tzoufas,forsetti}. While these methods focus on smoothness preservation through variational formulations, we add the crucial dimension of bounded-error constraints derived from sensor specifications. The trust-region mechanism in our sequential convexification provides formal guarantees on the validity of the linearization, which is not addressed in existing manifold spline work.
+
+Finally, our work complements set-membership estimation theory~\cite{springest} by extending it to nonlinear rotation manifolds. The local retraction mechanism ensures that updates remain within the validity region of the linearized constraints, bridging the gap between set-membership theory for linear systems and practical rotation smoothing problems.
+
+In summary, our approach integrates set-membership estimation, sequential convexification, and structured optimization to address rotation smoothing with bounded-error constraints on SO(3). The combination of theoretical rigor and computational efficiency provides a novel contribution to the rotation smoothing literature.

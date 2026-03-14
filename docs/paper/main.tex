@@ -1,0 +1,60 @@
+\documentclass{article}
+
+% Packages
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{cite}
+
+% Title information
+\title{Bounded-Noise Tube Smoothing on SO(3) via Sequential Convexification and Structured ADMM}
+\author{First Author\thanks{Department of Electrical Engineering, University Name} \and Second Author\thanks{Department of Robotics, University Name}}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We present a rotation smoothing algorithm for SO(3) that enforces bounded-error constraints through set-membership tubes. Our approach uses sequential convexification with local retractions on the manifold, combined with a structured ADMM solver that exploits the problem's block-diagonal structure. The method maintains feasibility with respect to hard tube constraints while providing computational efficiency through warm-starting strategies, adaptive trust-region parameters, and rigorous convergence analysis. We demonstrate effectiveness on both synthetic bounded-noise problems and real sensor data, showing superior performance compared to baseline SOCP approaches.
+
+\end{abstract}
+
+\section{Introduction}
+
+\input{sections/introduction.tex}
+
+\section{Related Work}
+
+\input{sections/related_work.tex}
+
+\section{Methods}
+
+\input{sections/methods.tex}
+
+\section{Figures and Visualizations}
+
+\input{sections/figures.tex}
+
+\section{Theoretical Analysis}
+
+\input{sections/theory.tex}
+
+\section{Experiments}
+
+\input{sections/experiments.tex}
+
+\section{Results}
+
+\input{sections/results.tex}
+
+\section{Conclusion}
+
+\input{sections/conclusion.tex}
+
+\bibliographystyle{ieeetr}
+\bibliography{references}
+
+\end{document}

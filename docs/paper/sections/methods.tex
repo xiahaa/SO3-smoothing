@@ -1,0 +1,156 @@
+\section{Methods}
+
+\subsection{Problem Formulation}
+
+We consider the problem of smoothing a sequence of rotation measurements $\{R_i\}_{i=0}^{N-1} \in \mathrm{SO}(3)$ under bounded-error constraints. Unlike traditional smoothing approaches that assume Gaussian noise, we adopt a set-membership formulation where each measurement is known only to lie within a geodesic ball of radius $\epsilon_i$:
+
+\begin{equation}
+\label{eq:tube_constraint}
+\left\| \log(R_i^T \hat{R}_i) \right\|_2 \leq \epsilon_i, \quad i = 0, \ldots, N-1
+\end{equation}
+
+where $\hat{R}_i$ is the smoothed rotation and $\log(\cdot)$ denotes the logarithm map from $\mathrm{SO}(3)$ to the Lie algebra $\mathfrak{so}(3)$. The optimization problem seeks to minimize a discrete energy penalizing angular velocity and acceleration while satisfying all tube constraints.
+
+\subsection{Lie Algebra Parameterization}
+
+We parameterize rotations in the tangent space using the exponential map:
+\begin{equation}
+\label{eq:parameterization}
+\hat{R}_i = \exp(\phi_i), \quad \phi_i \in \mathbb{R}^3
+\end{equation}
+
+where $\phi_i$ represents the incremental rotation from identity. This parameterization transforms the problem from a non-convex manifold optimization to a more tractable form in $\mathbb{R}^{3N}$.
+
+\subsection{Smoothing Objective}
+
+The discrete smoothing energy consists of first-order (angular velocity) and second-order (angular acceleration) terms:
+\begin{equation}
+\label{eq:objective}
+E(\phi) = \frac{\lambda}{2\tau}\sum_{i=0}^{N-2} \left\| \phi_{i+1} - \phi_i \right\|_2^2 + \frac{\mu}{2\tau^3}\sum_{i=1}^{N-2} \left\| \phi_{i-1} - 2\phi_i + \phi_{i+1} \right\|_2^2
+\end{equation}
+
+where $\lambda$ and $\mu$ weight the first and second-order smoothness, and $\tau$ is the time step between samples. This energy encourages smooth trajectories while allowing for realistic motion patterns.
+
+In matrix form, the objective becomes a quadratic form:
+\begin{equation}
+\label{eq:quadratic}
+E(\phi) = \frac{1}{2}\phi^\top \mathbf{H}\phi
+\end{equation}
+
+where $\phi = [\phi_0^\top, \phi_1^\top, \ldots, \phi_{N-1}^\top]^\top \in \mathbb{R}^{3N}$ and $\mathbf{H} \in \mathbb{R}^{3N \times 3N}$ is a block-banded sparse Hessian matrix constructed from finite difference matrices.
+
+\subsection{Sequential Convexification}
+
+Due to the nonlinearity of the tube constraint \eqref{eq:tube_constraint} in $\phi$, we employ sequential convexification. At iteration $k$, we linearize the constraint around the current estimate $\phi^k$:
+
+\begin{equation}
+\label{eq:linearized_constraint}
+\left\| \log\left(R_i^T \exp(\phi_i^{k+1})\right) \right\|_2 \leq \epsilon_i \approx \left\| r_i^k + \mathbf{J}_i^k \delta_i \right\|_2
+\end{equation}
+
+where $\phi_i^{k+1} = \phi_i^k + \delta_i$, and
+\begin{equation}
+r_i^k = \log\left(R_i^T \exp(\phi_i^k)\right), \quad \mathbf{J}_i^k = \mathbf{J}_r(r_i^k) \mathbf{J}_r(\phi_i^k)
+\end{equation}
+
+with $\mathbf{J}_r(\cdot)$ denoting the right Jacobian of the logarithm map.
+
+\subsection{Trust-Region Mechanism}
+
+To ensure the validity of the linearization, we introduce a trust-region constraint:
+\begin{equation}
+\label{eq:trust_region}
+\left\| \delta_i \right\|_2 \leq \Delta_i
+\end{equation}
+
+where $\Delta_i$ is the trust-region radius, dynamically adjusted based on the actual-to-predicted decrease ratio. This mechanism guarantees that each subproblem remains within the region where the linearization is accurate.
+
+\subsection{Inner Subproblem}
+
+At each outer iteration, we solve the following convex subproblem:
+\begin{equation}
+\label{eq:inner_problem}
+\begin{aligned}
+\min_{\delta} \quad & \frac{1}{2}\delta^\top \mathbf{H}\delta + \mathbf{g}^\top \delta \\
+\text{s.t.} \quad & \left\| r_i^k + \mathbf{J}_i^k \delta_i \right\|_2 \leq \epsilon_i, \quad i = 0,\ldots,N-1 \\
+& \left\| \delta_i \right\|_2 \leq \Delta_i, \quad i = 0,\ldots,N-1
+\end{aligned}
+\end{equation}
+
+where $\mathbf{g} = \mathbf{H}\phi^k$ is the gradient of the quadratic objective at the current iterate. This is a second-order cone program (SOCP) with $3N$ variables and $2N$ second-order cone constraints.
+
+\subsection{Structured ADMM Solver}
+
+We solve \eqref{eq:inner_problem} using the Alternating Direction Method of Multipliers (ADMM), which exploits the problem structure for efficiency. Introducing auxiliary variables $\mathbf{y}$ and $\mathbf{w}$, the augmented Lagrangian is:
+
+\begin{equation}
+\label{eq:augmented_lagrangian}
+\mathcal{L}_\rho(\delta, \mathbf{y}, \mathbf{w}, \mathbf{u}, \mathbf{v}) = \frac{1}{2}\delta^\top \mathbf{H}\delta + \mathbf{g}^\top \delta + \frac{\rho}{2}\sum_{i=0}^{N-1} \left\| r_i^k + \mathbf{J}_i^k \delta_i - y_i + u_i \right\|_2^2 + \frac{\rho}{2}\sum_{i=0}^{N-1} \left\| \delta_i - w_i + v_i \right\|_2^2
+\end{equation}
+
+where $\mathbf{u}, \mathbf{v}$ are dual variables for the tube and trust-region constraints respectively, and $\rho$ is the ADMM penalty parameter.
+
+The ADMM iterations proceed as follows:
+
+\textbf{$\delta$-update:} Solve the linear system
+\begin{equation}
+\label{eq:delta_update}
+(\mathbf{H} + \rho \text{blockdiag}(\mathbf{J}_i^{k\top} \mathbf{J}_i^k + \mathbf{I}_3))\delta = -\mathbf{g} + \rho \sum_{i=0}^{N-1} \mathbf{J}_i^{k\top}(y_i - r_i^k - u_i) + \rho \sum_{i=0}^{N-1} (w_i - v_i)
+\end{equation}
+
+Due to the block-banded structure of $\mathbf{H}$ and the block-diagonal addition, this system can be solved efficiently using sparse Cholesky factorization or preconditioned conjugate gradient methods.
+
+\textbf{$\mathbf{y}$-update:} Project onto tube constraints
+\begin{equation}
+\label{eq:y_update}
+y_i = \mathcal{P}_{\mathcal{B}(\epsilon_i)}(r_i^k + \mathbf{J}_i^k \delta_i + u_i)
+\end{equation}
+
+where $\mathcal{P}_{\mathcal{B}(r)}(x) = x$ if $\|x\|_2 \leq r$, otherwise $\mathcal{P}_{\mathcal{B}(r)}(x) = \frac{r}{\|x\|_2}x$.
+
+\textbf{$\mathbf{w}$-update:} Project onto trust regions
+\begin{equation}
+\label{eq:w_update}
+w_i = \mathcal{P}_{\mathcal{B}(\Delta_i)}(\delta_i + v_i)
+\end{equation}
+
+\textbf{Dual updates:}
+\begin{equation}
+\label{eq:dual_updates}
+u_i \leftarrow u_i + r_i^k + \mathbf{J}_i^k \delta_i - y_i \\
+v_i \leftarrow v_i + \delta_i - w_i
+\end{equation}
+
+The ADMM iterations continue until primal and dual residuals fall below specified tolerances.
+
+\subsection{Outer Loop Update Strategy}
+
+After solving the inner problem, we compute the ratio $\rho_k$ of actual to predicted decrease:
+\begin{equation}
+\label{eq:rho}
+\rho_k = \frac{E(\phi^k) - E(\phi^k + \delta^*)}{-\mathbf{g}^\top \delta^*}
+\end{equation}
+
+The update is accepted if $\rho_k \geq \eta_{\text{min}}$, and the trust-region radius is adjusted:
+\begin{itemize}
+\item If $\rho_k > \eta_{\text{good}}$: Increase $\Delta_i$ (more aggressive)
+\item If $\rho_k < \eta_{\text{bad}}$: Decrease $\Delta_i$ (more conservative)
+\end{itemize}
+
+The outer iterations continue until $\|\delta^*\|_\infty < \tau_{\text{outer}}$.
+
+\subsection{Theoretical Enhancements}
+
+Our implementation includes several theoretical enhancements that improve convergence and solution quality:
+
+\textbf{Warm-starting:} We reuse solutions from previous outer iterations to accelerate convergence. The initial $\phi^k$ is set using a damped combination of the measurement and previous update:
+\begin{equation}
+\phi^k = \phi_{\text{meas}} + \alpha \delta^{k-1}
+\end{equation}
+where $\alpha \in [0,1]$ is a damping factor.
+
+\textbf{Adaptive Trust-Region Parameters:} The thresholds $\eta_{\text{min}}$, $\eta_{\text{good}}$, and $\eta_{\text{bad}}$ are dynamically adjusted based on the acceptance history to handle varying problem conditioning.
+
+\textbf{KKT Condition Verification:} We check the Karush-Kuhn-Tucker optimality conditions after each inner solve to ensure solution quality, including primal stationarity, dual feasibility, and complementary slackness.
+
+\textbf{Convergence Rate Analysis:} We track the convergence rate by estimating the exponential decay of update norms, providing theoretical guarantees and performance characterization.
