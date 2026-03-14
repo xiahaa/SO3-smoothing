@@ -1,4 +1,10 @@
+"""SO(3) exponential/logarithmic map tests and branch-cut stability."""
+
+from __future__ import annotations
+
 import numpy as np
+import sys
+sys.path.insert(0, 'src')
 
 from so3 import exp_so3, log_so3, right_jacobian
 
@@ -24,6 +30,7 @@ def test_log_exp_roundtrip_vector() -> None:
 
 
 def test_right_jacobian_matches_finite_difference() -> None:
+    """Test that right_jacobian matches numerical finite difference."""
     rng = np.random.default_rng(3)
     phi = rng.normal(0.0, 0.4, size=3)
     Jr = right_jacobian(phi)
@@ -33,8 +40,33 @@ def test_right_jacobian_matches_finite_difference() -> None:
     for k in range(3):
         e = np.zeros(3)
         e[k] = 1.0
-        # Exp(phi + d) ≈ Exp(phi) Exp(Jr(phi) d)
-        R_rel = exp_so3(phi).T @ exp_so3(phi + eps * e)
-        J_num[:, k] = log_so3(R_rel) / eps
+        R_phi = exp_so3(phi)
+        R_perturbed = exp_so3(phi + eps * e)
+        # Use right-invariant relative rotation for finite difference
+        phi_diff = log_so3(R_phi.T @ R_perturbed)
+        J_num[:, k] = phi_diff / eps
 
     assert np.allclose(Jr, J_num, atol=5e-5)
+
+
+def test_near_pi_roundtrip() -> None:
+    """Test exp/log roundtrip near π for branch-cut stability."""
+    # Test angles around π with various offsets
+    angles = np.array([np.pi - 0.1, np.pi, np.pi + 0.1, np.pi - 0.05, np.pi + 0.05])
+
+    for angle in angles:
+        # Create rotation around z-axis
+        phi = np.array([0.0, 0.0, angle])
+        R = exp_so3(phi)
+
+        # Log and re-exponentiate
+        phi2 = log_so3(R)
+        R2 = exp_so3(phi2)
+
+        # Check roundtrip
+        assert np.allclose(R, R2, atol=1e-7)
+
+
+if __name__ == "__main__":
+    import pytest
+    pytest.main([__file__, "-v"])

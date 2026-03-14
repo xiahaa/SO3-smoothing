@@ -55,7 +55,8 @@ def add_gaussian_rotation_noise(
 
     # Add isotropic Gaussian noise to all samples
     noise = rng.normal(scale=sigma, size=(N, 3))
-    R_noisy = R_noisy @ exp_so3(noise)
+    for i in range(N):
+        R_noisy[i] = R_noisy[i] @ exp_so3(noise[i])
 
     return R_noisy
 

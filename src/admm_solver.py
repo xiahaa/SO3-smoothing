@@ -84,6 +84,9 @@ def solve_inner_admm(
     tol: float = 1e-4,
     linear_solver: str = "splu",
     slack: bool = False,  # Add slack variables for infeasible constraints
+    u_init: Optional[Array] = None,  # Initial dual variables for y constraints
+    v_init: Optional[Array] = None,  # Initial dual variables for trust region
+    check_kkt: bool = False,  # If True, check KKT conditions
 ) -> Tuple[Array, Dict[str, Any]]:
     """Solve the inner convex QP+SOC constraints by ADMM.
 
@@ -91,6 +94,26 @@ def solve_inner_admm(
       min 0.5 δ^T H δ + g^T δ + ρ * sum(s_j)  [with slack]
       s.t. y_j = r_j + J_j δ_j, ||y_j||<=eps_j + s_j
            w_j = δ_j,           ||w_j||<=Delta
+
+    Args:
+        H: Hessian matrix (3M x 3M)
+        g: Gradient vector (3M,)
+        r_list: Linearization residuals, shape (M, 3)
+        J_list: Linearization Jacobians, shape (M, 3, 3)
+        eps: Tube radii, shape (M,)
+        Delta: Trust region radius
+        rho: ADMM penalty parameter
+        max_iter: Maximum ADMM iterations
+        tol: Convergence tolerance
+        linear_solver: Linear solver type ('splu' or 'pcg')
+        slack: If True, add slack variables for infeasible constraints
+        u_init: Initial dual variables for y constraints (M, 3)
+        v_init: Initial dual variables for trust region (M, 3)
+        check_kkt: If True, check KKT conditions
+
+    Returns:
+        delta: Solution vector (3M,)
+        stats: Dictionary with iteration counts, residuals, elapsed time, etc.
     """
     t0 = time.perf_counter()
 
@@ -110,12 +133,13 @@ def solve_inner_admm(
     A = (H + rho * _build_blockdiag_from_blocks(B) + 1e-9 * sp.eye(3*M)).tocsc()
     solver_kind, solver_obj = _make_linear_solver(A, prefer=linear_solver)
 
+    # Initialize with optional warm-start
     delta = np.zeros((M, 3), dtype=np.float64)
     s = np.zeros(M, dtype=np.float64) if slack else None  # Slack variables
     y = _proj_ball_rows(r.copy(), eps)
     w = np.zeros((M, 3), dtype=np.float64)
-    u = np.zeros((M, 3), dtype=np.float64)
-    v = np.zeros((M, 3), dtype=np.float64)
+    u = u_init.copy() if u_init is not None else np.zeros((M, 3), dtype=np.float64)
+    v = v_init.copy() if v_init is not None else np.zeros((M, 3), dtype=np.float64)
 
     pri_hist: List[float] = []
     dual_hist: List[float] = []
@@ -179,6 +203,8 @@ def solve_inner_admm(
         "elapsed_sec": elapsed,
         "solver": solver_kind,
         "A_nnz": int(A.nnz),
+        "u": u.copy(),  # Final dual variables for warm-starting
+        "v": v.copy(),  # Final dual variables for warm-starting
     }
     # Track active slack indices for infeasibility analysis
     if slack:
@@ -186,6 +212,68 @@ def solve_inner_admm(
     else:
         stats["active_slack_indices"] = []
 
+    # Check KKT conditions if requested
+    if check_kkt:
+        kkt_metrics = _check_kkt_conditions(
+            delta, r_list, J_list, eps, H, g, rho, y, w, u, v, Delta
+        )
+        stats["kkt_conditions"] = kkt_metrics
+
     return delta.reshape(-1), stats
+
+
+def _check_kkt_conditions(
+    delta: Array,
+    r_list: List[Array],
+    J_list: List[Array],
+    eps: Array,
+    H: sp.csc_matrix,
+    g: Array,
+    rho: float,
+    y: Array,
+    w: Array,
+    u: Array,
+    v: Array,
+    Delta: float,
+) -> Dict[str, float]:
+    """Check Karush-Kuhn-Tucker optimality conditions.
+
+    Returns:
+        Dict with primal/dual stationarity, complementary slackness, etc.
+    """
+    M = len(r_list)
+    delta_vec = delta.reshape(-1)
+    delta_unstacked = delta.reshape(M, 3)
+
+    # Primal stationarity: gradient + constraints' dual = 0
+    # For ADMM, the KKT condition includes the effect of the augmented Lagrangian
+    grad = H @ delta_vec + g
+    # Add contributions from constraints: J^T * (y + u) + (w + v)
+    J = np.stack([np.asarray(x, dtype=np.float64).reshape(3, 3) for x in J_list], axis=0)
+    J_transposed = np.transpose(J, (0, 2, 1))
+    constraint_grad = np.einsum("mij,mj->mi", J_transposed, y + u) + (w + v)
+    primal_stationarity = np.linalg.norm(grad + constraint_grad.reshape(-1))
+
+    # Dual feasibility for tube constraints: ||y_j|| <= eps_j
+    dual_tube_violation = np.max([np.linalg.norm(y_j) - eps_j for y_j, eps_j in zip(y, eps)])
+
+    # Dual feasibility for trust region: ||w_j|| <= Delta
+    dual_trust_violation = np.max(np.linalg.norm(w, axis=1)) - Delta
+
+    # Complementary slackness: dual variables for inactive constraints ≈ 0
+    # For ADMM, u and v represent dual variables for constraints
+    active_constraints = [np.linalg.norm(y_j) >= eps_j - 1e-6 for y_j, eps_j in zip(y, eps)]
+    if any(active_constraints):
+        active_indices = [i for i, active in enumerate(active_constraints) if active]
+        avg_dual_active = np.mean(np.linalg.norm(u[active_indices], axis=1))
+    else:
+        avg_dual_active = 0.0
+
+    return {
+        "primal_stationarity": float(primal_stationarity),
+        "dual_tube_violation": float(max(0.0, dual_tube_violation)),
+        "dual_trust_violation": float(max(0.0, dual_trust_violation)),
+        "avg_dual_active": float(avg_dual_active),
+    }
 
 __all__ = ["proj_ball", "solve_inner_admm"]
