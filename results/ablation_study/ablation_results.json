@@ -1,0 +1,1425 @@
+{
+  "rho": [
+    {
+      "status": "success",
+      "config": {
+        "rho": 0.1,
+        "max_outer": 15
+      },
+      "runtime": 1.1680039018392563,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 4.89089521551352e-06,
+      "max_violation": 0.0008615442974042598,
+      "gt_error_rms": 0.06384203298274904,
+      "vel_rms": 0.0254651813285155,
+      "acc_rms": 0.002518425341099976,
+      "param_rho": 0.1
+    },
+    {
+      "status": "success",
+      "config": {
+        "rho": 0.1,
+        "max_outer": 15
+      },
+      "runtime": 1.1646263860166073,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 0.0002513475911369711,
+      "max_violation": 0.0011427547769225777,
+      "gt_error_rms": 0.07513607804760795,
+      "vel_rms": 0.023848456617737025,
+      "acc_rms": 0.0022714548640608043,
+      "param_rho": 0.1
+    },
+    {
+      "status": "success",
+      "config": {
+        "rho": 0.1,
+        "max_outer": 15
+      },
+      "runtime": 1.1576228821650147,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 3.080018286622723e-06,
+      "max_violation": 0.0012244093002983236,
+      "gt_error_rms": 0.06806115160757412,
+      "vel_rms": 0.023970627047766313,
+      "acc_rms": 0.0022516917668123832,
+      "param_rho": 0.1
+    },
+    {
+      "status": "success",
+      "config": {
+        "rho": 0.5,
+        "max_outer": 15
+      },
+      "runtime": 0.7035817615687847,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 4.856374496785764e-06,
+      "max_violation": 7.011208009038983e-05,
+      "gt_error_rms": 0.06383868235720913,
+      "vel_rms": 0.02547451453862195,
+      "acc_rms": 0.0025225183339057287,
+      "param_rho": 0.5
+    },
+    {
+      "status": "success",
+      "config": {
+        "rho": 0.5,
+        "max_outer": 15
+      },
+      "runtime": 0.8428711220622063,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 0.0002503243680919138,
+      "max_violation": 0.0002212709156256265,
+      "gt_error_rms": 0.07509263964106687,
+      "vel_rms": 0.023858466487425192,
+      "acc_rms": 0.0022787012593203245,
+      "param_rho": 0.5
+    },
+    {
+      "status": "success",
+      "config": {
+        "rho": 0.5,
+        "max_outer": 15
+      },
+      "runtime": 1.1402591313235462,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 3.1045833324155116e-06,
+      "max_violation": 6.833371496053897e-05,
+      "gt_error_rms": 0.06813447980997411,
+      "vel_rms": 0.023983130851500434,
+      "acc_rms": 0.0022573036369591174,
+      "param_rho": 0.5
+    },
+    {
+      "status": "success",
+      "config": {
+        "rho": 1.0,
+        "max_outer": 15
+      },
+      "runtime": 0.6006949776783586,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 4.857008023540894e-06,
+      "max_violation": 1.7965601016384225e-05,
+      "gt_error_rms": 0.06383859243372143,
+      "vel_rms": 0.02547496704232656,
+      "acc_rms": 0.002523161686883828,
+      "param_rho": 1.0
+    },
+    {
+      "status": "success",
+      "config": {
+        "rho": 1.0,
+        "max_outer": 15
+      },
+      "runtime": 0.6448348700068891,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 0.0002504648848126368,
+      "max_violation": 0.00022175623412021284,
+      "gt_error_rms": 0.07508156385756613,
+      "vel_rms": 0.02385833886811817,
+      "acc_rms": 0.002278783633606616,
+      "param_rho": 1.0
+    },
+    {
+      "status": "success",
+      "config": {
+        "rho": 1.0,
+        "max_outer": 15
+      },
+      "runtime": 0.7809353061020374,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 3.104597566029738e-06,
+      "max_violation": 6.753170734585812e-05,
+      "gt_error_rms": 0.06813477791135751,
+      "vel_rms": 0.023983125739437543,
+      "acc_rms": 0.0022573147391456135,
+      "param_rho": 1.0
+    },
+    {
+      "status": "success",
+      "config": {
+        "rho": 2.0,
+        "max_outer": 15
+      },
+      "runtime": 0.641747557092458,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 4.861499206335117e-06,
+      "max_violation": 1.5642015217531835e-06,
+      "gt_error_rms": 0.06384307585077131,
+      "vel_rms": 0.025474848282466146,
+      "acc_rms": 0.002523267831707418,
+      "param_rho": 2.0
+    },
+    {
+      "status": "success",
+      "config": {
+        "rho": 2.0,
+        "max_outer": 15
+      },
+      "runtime": 0.6316949441097677,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 0.00025024998834163225,
+      "max_violation": 0.0002059170263270793,
+      "gt_error_rms": 0.0750892065776888,
+      "vel_rms": 0.023858504233376987,
+      "acc_rms": 0.0022793965498322864,
+      "param_rho": 2.0
+    },
+    {
+      "status": "success",
+      "config": {
+        "rho": 2.0,
+        "max_outer": 15
+      },
+      "runtime": 0.644177867565304,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 3.1034561871694316e-06,
+      "max_violation": 2.1990806282568e-05,
+      "gt_error_rms": 0.06814255464987716,
+      "vel_rms": 0.02398326678180489,
+      "acc_rms": 0.0022575655869819635,
+      "param_rho": 2.0
+    },
+    {
+      "status": "success",
+      "config": {
+        "rho": 5.0,
+        "max_outer": 15
+      },
+      "runtime": 0.6890669181011617,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 4.892587425888236e-06,
+      "max_violation": 1.387203154179506e-06,
+      "gt_error_rms": 0.06384205436458158,
+      "vel_rms": 0.02547478474152423,
+      "acc_rms": 0.002523281621003721,
+      "param_rho": 5.0
+    },
+    {
+      "status": "success",
+      "config": {
+        "rho": 5.0,
+        "max_outer": 15
+      },
+      "runtime": 0.7024634829722345,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 0.0002499541441558924,
+      "max_violation": 0.00020447142264670704,
+      "gt_error_rms": 0.07510392752005898,
+      "vel_rms": 0.02385829545115386,
+      "acc_rms": 0.0022793543382623183,
+      "param_rho": 5.0
+    },
+    {
+      "status": "success",
+      "config": {
+        "rho": 5.0,
+        "max_outer": 15
+      },
+      "runtime": 0.6819567470811307,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 3.0249437965213095e-06,
+      "max_violation": 1.099526244710547e-05,
+      "gt_error_rms": 0.06814049064704758,
+      "vel_rms": 0.023983393250643397,
+      "acc_rms": 0.002257655587391589,
+      "param_rho": 5.0
+    },
+    {
+      "status": "success",
+      "config": {
+        "rho": 10.0,
+        "max_outer": 15
+      },
+      "runtime": 0.7233110470697284,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 4.635862638255682e-06,
+      "max_violation": 1.1679889530269438e-06,
+      "gt_error_rms": 0.06384182555450217,
+      "vel_rms": 0.025474781913490716,
+      "acc_rms": 0.0025232775091701613,
+      "param_rho": 10.0
+    },
+    {
+      "status": "success",
+      "config": {
+        "rho": 10.0,
+        "max_outer": 15
+      },
+      "runtime": 0.7689077542163432,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 0.0002496016140829383,
+      "max_violation": 0.00020425424682463111,
+      "gt_error_rms": 0.0750872972044714,
+      "vel_rms": 0.02385829387335301,
+      "acc_rms": 0.002279365484116012,
+      "param_rho": 10.0
+    },
+    {
+      "status": "success",
+      "config": {
+        "rho": 10.0,
+        "max_outer": 15
+      },
+      "runtime": 0.7653295770287514,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 3.0278275032977253e-06,
+      "max_violation": 1.4045125349138043e-06,
+      "gt_error_rms": 0.06813504663840705,
+      "vel_rms": 0.023983423690948937,
+      "acc_rms": 0.0022575955691215067,
+      "param_rho": 10.0
+    }
+  ],
+  "Delta": [
+    {
+      "status": "success",
+      "config": {
+        "Delta": 0.05,
+        "max_outer": 15
+      },
+      "runtime": 0.7194104292429984,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 0.00987755093915927,
+      "max_violation": 0.008078313332490566,
+      "gt_error_rms": 0.06423243825234604,
+      "vel_rms": 0.025395541104676105,
+      "acc_rms": 0.0025618669410866655,
+      "param_Delta": 0.05
+    },
+    {
+      "status": "success",
+      "config": {
+        "Delta": 0.05,
+        "max_outer": 15
+      },
+      "runtime": 0.7444640439935029,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 0.006199264818405303,
+      "max_violation": 0.005351622364676761,
+      "gt_error_rms": 0.07553611958219739,
+      "vel_rms": 0.02382532426574725,
+      "acc_rms": 0.0022970159406687294,
+      "param_Delta": 0.05
+    },
+    {
+      "status": "success",
+      "config": {
+        "Delta": 0.05,
+        "max_outer": 15
+      },
+      "runtime": 0.8485908680595458,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 0.00017123700186745812,
+      "max_violation": 8.69643779970175e-05,
+      "gt_error_rms": 0.06812923251790513,
+      "vel_rms": 0.023983247809386446,
+      "acc_rms": 0.002257019105623052,
+      "param_Delta": 0.05
+    },
+    {
+      "status": "success",
+      "config": {
+        "Delta": 0.1,
+        "max_outer": 15
+      },
+      "runtime": 0.6388158481568098,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 5.4994873829668484e-05,
+      "max_violation": 2.2094996434407488e-05,
+      "gt_error_rms": 0.06384021543438417,
+      "vel_rms": 0.025474917202868635,
+      "acc_rms": 0.0025232278934558617,
+      "param_Delta": 0.1
+    },
+    {
+      "status": "success",
+      "config": {
+        "Delta": 0.1,
+        "max_outer": 15
+      },
+      "runtime": 0.6922939820215106,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 2.4722601759720695e-06,
+      "max_violation": 5.9643144354082356e-05,
+      "gt_error_rms": 0.07507371252797657,
+      "vel_rms": 0.023858866605239948,
+      "acc_rms": 0.002278549975975241,
+      "param_Delta": 0.1
+    },
+    {
+      "status": "success",
+      "config": {
+        "Delta": 0.1,
+        "max_outer": 15
+      },
+      "runtime": 0.8238307638093829,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 4.53212494373244e-05,
+      "max_violation": 7.151633131069479e-05,
+      "gt_error_rms": 0.06813614000759181,
+      "vel_rms": 0.02398307429064902,
+      "acc_rms": 0.0022573909781752554,
+      "param_Delta": 0.1
+    },
+    {
+      "status": "success",
+      "config": {
+        "Delta": 0.2,
+        "max_outer": 15
+      },
+      "runtime": 0.5972875491715968,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 4.857008023540894e-06,
+      "max_violation": 1.7965601016384225e-05,
+      "gt_error_rms": 0.06383859243372143,
+      "vel_rms": 0.02547496704232656,
+      "acc_rms": 0.002523161686883828,
+      "param_Delta": 0.2
+    },
+    {
+      "status": "success",
+      "config": {
+        "Delta": 0.2,
+        "max_outer": 15
+      },
+      "runtime": 0.6475849151611328,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 0.0002504648848126368,
+      "max_violation": 0.00022175623412021284,
+      "gt_error_rms": 0.07508156385756613,
+      "vel_rms": 0.02385833886811817,
+      "acc_rms": 0.002278783633606616,
+      "param_Delta": 0.2
+    },
+    {
+      "status": "success",
+      "config": {
+        "Delta": 0.2,
+        "max_outer": 15
+      },
+      "runtime": 0.7841281211003661,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 3.104597566029738e-06,
+      "max_violation": 6.753170734585812e-05,
+      "gt_error_rms": 0.06813477791135751,
+      "vel_rms": 0.023983125739437543,
+      "acc_rms": 0.0022573147391456135,
+      "param_Delta": 0.2
+    },
+    {
+      "status": "success",
+      "config": {
+        "Delta": 0.5,
+        "max_outer": 15
+      },
+      "runtime": 0.6015709461644292,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 4.856905339430296e-06,
+      "max_violation": 1.7965482191628634e-05,
+      "gt_error_rms": 0.06383859243158387,
+      "vel_rms": 0.025474967042519166,
+      "acc_rms": 0.002523161687036732,
+      "param_Delta": 0.5
+    },
+    {
+      "status": "success",
+      "config": {
+        "Delta": 0.5,
+        "max_outer": 15
+      },
+      "runtime": 0.6507141720503569,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 0.0002504656759808917,
+      "max_violation": 0.000221756686857838,
+      "gt_error_rms": 0.07508156392982157,
+      "vel_rms": 0.02385833886508269,
+      "acc_rms": 0.0022787836354004015,
+      "param_Delta": 0.5
+    },
+    {
+      "status": "success",
+      "config": {
+        "Delta": 0.5,
+        "max_outer": 15
+      },
+      "runtime": 0.7857694579288363,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 3.104597567442624e-06,
+      "max_violation": 6.7531707344054e-05,
+      "gt_error_rms": 0.06813477791135417,
+      "vel_rms": 0.023983125739437575,
+      "acc_rms": 0.002257314739145611,
+      "param_Delta": 0.5
+    },
+    {
+      "status": "success",
+      "config": {
+        "Delta": 1.0,
+        "max_outer": 15
+      },
+      "runtime": 0.5963085191324353,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 4.856905339430296e-06,
+      "max_violation": 1.7965482191628634e-05,
+      "gt_error_rms": 0.06383859243158387,
+      "vel_rms": 0.025474967042519166,
+      "acc_rms": 0.002523161687036732,
+      "param_Delta": 1.0
+    },
+    {
+      "status": "success",
+      "config": {
+        "Delta": 1.0,
+        "max_outer": 15
+      },
+      "runtime": 0.6456074868328869,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 0.0002504656759808917,
+      "max_violation": 0.000221756686857838,
+      "gt_error_rms": 0.07508156392982157,
+      "vel_rms": 0.02385833886508269,
+      "acc_rms": 0.0022787836354004015,
+      "param_Delta": 1.0
+    },
+    {
+      "status": "success",
+      "config": {
+        "Delta": 1.0,
+        "max_outer": 15
+      },
+      "runtime": 0.78270716778934,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 3.104597567442624e-06,
+      "max_violation": 6.7531707344054e-05,
+      "gt_error_rms": 0.06813477791135417,
+      "vel_rms": 0.023983125739437575,
+      "acc_rms": 0.002257314739145611,
+      "param_Delta": 1.0
+    }
+  ],
+  "smoothness": [
+    {
+      "status": "success",
+      "config": {
+        "lam": 0.1,
+        "mu": 0.01,
+        "max_outer": 15
+      },
+      "runtime": 0.587097710929811,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 5.3554565779871855e-05,
+      "max_violation": 5.6404844763768835e-05,
+      "gt_error_rms": 0.0638558965281517,
+      "vel_rms": 0.02547253710029359,
+      "acc_rms": 0.002524794710836774,
+      "param_lam": 0.1,
+      "param_mu": 0.01
+    },
+    {
+      "status": "success",
+      "config": {
+        "lam": 0.1,
+        "mu": 0.01,
+        "max_outer": 15
+      },
+      "runtime": 0.6007687598466873,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 0.00017038717172540083,
+      "max_violation": 3.288412925109285e-05,
+      "gt_error_rms": 0.07499652321582373,
+      "vel_rms": 0.023856871385843408,
+      "acc_rms": 0.0022812288920352015,
+      "param_lam": 0.1,
+      "param_mu": 0.01
+    },
+    {
+      "status": "success",
+      "config": {
+        "lam": 0.1,
+        "mu": 0.01,
+        "max_outer": 15
+      },
+      "runtime": 0.6106891417875886,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 4.5319159299129264e-05,
+      "max_violation": 4.7921953506419035e-05,
+      "gt_error_rms": 0.06810698827814111,
+      "vel_rms": 0.023983447051021473,
+      "acc_rms": 0.0022580696240123914,
+      "param_lam": 0.1,
+      "param_mu": 0.01
+    },
+    {
+      "status": "success",
+      "config": {
+        "lam": 0.1,
+        "mu": 0.1,
+        "max_outer": 15
+      },
+      "runtime": 0.6273742117919028,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 0.00023956863635237662,
+      "max_violation": 7.220689557707605e-05,
+      "gt_error_rms": 0.0648325052026005,
+      "vel_rms": 0.02626122685247975,
+      "acc_rms": 0.0022012649224440258,
+      "param_lam": 0.1,
+      "param_mu": 0.1
+    },
+    {
+      "status": "success",
+      "config": {
+        "lam": 0.1,
+        "mu": 0.1,
+        "max_outer": 15
+      },
+      "runtime": 0.6623424468562007,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 0.0002517295680965527,
+      "max_violation": 7.155858360610723e-05,
+      "gt_error_rms": 0.07285230769063554,
+      "vel_rms": 0.024585158002209697,
+      "acc_rms": 0.0019839440526130143,
+      "param_lam": 0.1,
+      "param_mu": 0.1
+    },
+    {
+      "status": "success",
+      "config": {
+        "lam": 0.1,
+        "mu": 0.1,
+        "max_outer": 15
+      },
+      "runtime": 0.6736466186121106,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 4.3315986864971955e-06,
+      "max_violation": 2.8496365165692206e-05,
+      "gt_error_rms": 0.06228702365716374,
+      "vel_rms": 0.024657933765420702,
+      "acc_rms": 0.0020020545083589882,
+      "param_lam": 0.1,
+      "param_mu": 0.1
+    },
+    {
+      "status": "success",
+      "config": {
+        "lam": 1.0,
+        "mu": 0.01,
+        "max_outer": 15
+      },
+      "runtime": 0.5534597500227392,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 4.782781870817373e-06,
+      "max_violation": 2.8553733200459286e-05,
+      "gt_error_rms": 0.06872082619675833,
+      "vel_rms": 0.02506272058119075,
+      "acc_rms": 0.003650813904057195,
+      "param_lam": 1.0,
+      "param_mu": 0.01
+    },
+    {
+      "status": "success",
+      "config": {
+        "lam": 1.0,
+        "mu": 0.01,
+        "max_outer": 15
+      },
+      "runtime": 0.4878877978771925,
+      "outer_iter": 13,
+      "converged": true,
+      "final_delta_inf": 4.192869642604362e-07,
+      "max_violation": 1.572945899830369e-05,
+      "gt_error_rms": 0.07967095850222929,
+      "vel_rms": 0.023537249833395724,
+      "acc_rms": 0.003191677452718215,
+      "param_lam": 1.0,
+      "param_mu": 0.01
+    },
+    {
+      "status": "success",
+      "config": {
+        "lam": 1.0,
+        "mu": 0.01,
+        "max_outer": 15
+      },
+      "runtime": 0.7595374323427677,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 2.8989453319029266e-06,
+      "max_violation": 4.5779801074952164e-05,
+      "gt_error_rms": 0.07214861633803855,
+      "vel_rms": 0.023706440984957312,
+      "acc_rms": 0.00305367679686531,
+      "param_lam": 1.0,
+      "param_mu": 0.01
+    },
+    {
+      "status": "success",
+      "config": {
+        "lam": 1.0,
+        "mu": 0.1,
+        "max_outer": 15
+      },
+      "runtime": 0.600293209310621,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 4.857008023540894e-06,
+      "max_violation": 1.7965601016384225e-05,
+      "gt_error_rms": 0.06383859243372143,
+      "vel_rms": 0.02547496704232656,
+      "acc_rms": 0.002523161686883828,
+      "param_lam": 1.0,
+      "param_mu": 0.1
+    },
+    {
+      "status": "success",
+      "config": {
+        "lam": 1.0,
+        "mu": 0.1,
+        "max_outer": 15
+      },
+      "runtime": 0.6457688491791487,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 0.0002504648848126368,
+      "max_violation": 0.00022175623412021284,
+      "gt_error_rms": 0.07508156385756613,
+      "vel_rms": 0.02385833886811817,
+      "acc_rms": 0.002278783633606616,
+      "param_lam": 1.0,
+      "param_mu": 0.1
+    },
+    {
+      "status": "success",
+      "config": {
+        "lam": 1.0,
+        "mu": 0.1,
+        "max_outer": 15
+      },
+      "runtime": 0.7819049684330821,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 3.104597566029738e-06,
+      "max_violation": 6.753170734585812e-05,
+      "gt_error_rms": 0.06813477791135751,
+      "vel_rms": 0.023983125739437543,
+      "acc_rms": 0.0022573147391456135,
+      "param_lam": 1.0,
+      "param_mu": 0.1
+    },
+    {
+      "status": "success",
+      "config": {
+        "lam": 1.0,
+        "mu": 0.5,
+        "max_outer": 15
+      },
+      "runtime": 0.7873330381698906,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 9.429643145734249e-05,
+      "max_violation": 0.00011757775480664145,
+      "gt_error_rms": 0.06327563231210172,
+      "vel_rms": 0.026036542280967242,
+      "acc_rms": 0.002240537130351866,
+      "param_lam": 1.0,
+      "param_mu": 0.5
+    },
+    {
+      "status": "success",
+      "config": {
+        "lam": 1.0,
+        "mu": 0.5,
+        "max_outer": 15
+      },
+      "runtime": 0.6389021747745574,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 9.257594621875563e-05,
+      "max_violation": 4.721622884679144e-05,
+      "gt_error_rms": 0.07322486586670378,
+      "vel_rms": 0.02435370579142577,
+      "acc_rms": 0.0020254054040090667,
+      "param_lam": 1.0,
+      "param_mu": 0.5
+    },
+    {
+      "status": "success",
+      "config": {
+        "lam": 1.0,
+        "mu": 0.5,
+        "max_outer": 15
+      },
+      "runtime": 0.9945527100935578,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 8.462328501564999e-05,
+      "max_violation": 5.857148273705204e-05,
+      "gt_error_rms": 0.0639931914346647,
+      "vel_rms": 0.024374486393139574,
+      "acc_rms": 0.00205047869950893,
+      "param_lam": 1.0,
+      "param_mu": 0.5
+    },
+    {
+      "status": "success",
+      "config": {
+        "lam": 10.0,
+        "mu": 0.1,
+        "max_outer": 15
+      },
+      "runtime": 1.153603711631149,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 4.804749969040151e-06,
+      "max_violation": 0.0004239808572286674,
+      "gt_error_rms": 0.0687387207280409,
+      "vel_rms": 0.025059918917728827,
+      "acc_rms": 0.003648181157189263,
+      "param_lam": 10.0,
+      "param_mu": 0.1
+    },
+    {
+      "status": "success",
+      "config": {
+        "lam": 10.0,
+        "mu": 0.1,
+        "max_outer": 15
+      },
+      "runtime": 1.02217640215531,
+      "outer_iter": 13,
+      "converged": true,
+      "final_delta_inf": 4.182794700999075e-07,
+      "max_violation": 0.0001240182974448778,
+      "gt_error_rms": 0.07968574315801838,
+      "vel_rms": 0.023536748498808817,
+      "acc_rms": 0.0031891203227804505,
+      "param_lam": 10.0,
+      "param_mu": 0.1
+    },
+    {
+      "status": "success",
+      "config": {
+        "lam": 10.0,
+        "mu": 0.1,
+        "max_outer": 15
+      },
+      "runtime": 1.1709777568466961,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 2.89705196534467e-06,
+      "max_violation": 0.0006757537733522445,
+      "gt_error_rms": 0.07212895273834027,
+      "vel_rms": 0.023704109560225704,
+      "acc_rms": 0.003045823297268378,
+      "param_lam": 10.0,
+      "param_mu": 0.1
+    },
+    {
+      "status": "success",
+      "config": {
+        "lam": 10.0,
+        "mu": 1.0,
+        "max_outer": 15
+      },
+      "runtime": 1.1690354803577065,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 4.8908952487084835e-06,
+      "max_violation": 0.0008615442848019794,
+      "gt_error_rms": 0.06384203265373037,
+      "vel_rms": 0.02546518133953233,
+      "acc_rms": 0.002518425329938977,
+      "param_lam": 10.0,
+      "param_mu": 1.0
+    },
+    {
+      "status": "success",
+      "config": {
+        "lam": 10.0,
+        "mu": 1.0,
+        "max_outer": 15
+      },
+      "runtime": 1.1731550390832126,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 0.0002513475918512033,
+      "max_violation": 0.001142754764393794,
+      "gt_error_rms": 0.07513607748403077,
+      "vel_rms": 0.023848456625700655,
+      "acc_rms": 0.0022714548561597672,
+      "param_lam": 10.0,
+      "param_mu": 1.0
+    },
+    {
+      "status": "success",
+      "config": {
+        "lam": 10.0,
+        "mu": 1.0,
+        "max_outer": 15
+      },
+      "runtime": 1.177758222911507,
+      "outer_iter": 15,
+      "converged": false,
+      "final_delta_inf": 3.0800183162394246e-06,
+      "max_violation": 0.0012244092354893321,
+      "gt_error_rms": 0.06806115159136862,
+      "vel_rms": 0.023970627052436633,
+      "acc_rms": 0.0022516917623236128,
+      "param_lam": 10.0,
+      "param_mu": 1.0
+    }
+  ],
+  "warmstart": [
+    {
+      "status": "success",
+      "config": {
+        "warmstart": false,
+        "adaptive_eta": false,
+        "max_outer": 20
+      },
+      "runtime": 0.8079913249239326,
+      "outer_iter": 20,
+      "converged": false,
+      "final_delta_inf": 4.857008023540894e-06,
+      "max_violation": 1.7965601016384225e-05,
+      "gt_error_rms": 0.06383859243372143,
+      "vel_rms": 0.02547496704232656,
+      "acc_rms": 0.002523161686883828,
+      "param_config": "{'warmstart': False, 'adaptive_eta': False}"
+    },
+    {
+      "status": "success",
+      "config": {
+        "warmstart": false,
+        "adaptive_eta": false,
+        "max_outer": 20
+      },
+      "runtime": 0.8814927553758025,
+      "outer_iter": 20,
+      "converged": false,
+      "final_delta_inf": 0.0002504648848126368,
+      "max_violation": 0.00022175623412021284,
+      "gt_error_rms": 0.07508156385756613,
+      "vel_rms": 0.02385833886811817,
+      "acc_rms": 0.002278783633606616,
+      "param_config": "{'warmstart': False, 'adaptive_eta': False}"
+    },
+    {
+      "status": "success",
+      "config": {
+        "warmstart": false,
+        "adaptive_eta": false,
+        "max_outer": 20
+      },
+      "runtime": 1.088356118183583,
+      "outer_iter": 20,
+      "converged": false,
+      "final_delta_inf": 3.104597566029738e-06,
+      "max_violation": 6.753170734585812e-05,
+      "gt_error_rms": 0.06813477791135751,
+      "vel_rms": 0.023983125739437543,
+      "acc_rms": 0.0022573147391456135,
+      "param_config": "{'warmstart': False, 'adaptive_eta': False}"
+    },
+    {
+      "status": "success",
+      "config": {
+        "warmstart": true,
+        "adaptive_eta": false,
+        "warmstart_damping": 0.3,
+        "max_outer": 20
+      },
+      "runtime": 0.6590989250689745,
+      "outer_iter": 20,
+      "converged": false,
+      "final_delta_inf": 8.764726603770096e-06,
+      "max_violation": 8.074978239430708e-06,
+      "gt_error_rms": 0.06383497257416522,
+      "vel_rms": 0.025475363307767025,
+      "acc_rms": 0.002522882057824343,
+      "param_config": "{'warmstart': True, 'adaptive_eta': False, 'warmstart_damping': 0.3}"
+    },
+    {
+      "status": "success",
+      "config": {
+        "warmstart": true,
+        "adaptive_eta": false,
+        "warmstart_damping": 0.3,
+        "max_outer": 20
+      },
+      "runtime": 0.6564248390495777,
+      "outer_iter": 20,
+      "converged": false,
+      "final_delta_inf": 0.00030736876373624626,
+      "max_violation": 0.00025982105044183856,
+      "gt_error_rms": 0.07510248945133755,
+      "vel_rms": 0.023858129165288674,
+      "acc_rms": 0.002278871247330366,
+      "param_config": "{'warmstart': True, 'adaptive_eta': False, 'warmstart_damping': 0.3}"
+    },
+    {
+      "status": "success",
+      "config": {
+        "warmstart": true,
+        "adaptive_eta": false,
+        "warmstart_damping": 0.3,
+        "max_outer": 20
+      },
+      "runtime": 0.6367379012517631,
+      "outer_iter": 20,
+      "converged": false,
+      "final_delta_inf": 0.00022719320667169928,
+      "max_violation": 0.000157758474377101,
+      "gt_error_rms": 0.06814768657277556,
+      "vel_rms": 0.023982073487488206,
+      "acc_rms": 0.0022584677388324814,
+      "param_config": "{'warmstart': True, 'adaptive_eta': False, 'warmstart_damping': 0.3}"
+    },
+    {
+      "status": "success",
+      "config": {
+        "warmstart": true,
+        "adaptive_eta": false,
+        "warmstart_damping": 0.5,
+        "max_outer": 20
+      },
+      "runtime": 0.6155295809730887,
+      "outer_iter": 20,
+      "converged": false,
+      "final_delta_inf": 8.764726603770096e-06,
+      "max_violation": 8.074978239430708e-06,
+      "gt_error_rms": 0.06383497257416522,
+      "vel_rms": 0.025475363307767025,
+      "acc_rms": 0.002522882057824343,
+      "param_config": "{'warmstart': True, 'adaptive_eta': False, 'warmstart_damping': 0.5}"
+    },
+    {
+      "status": "success",
+      "config": {
+        "warmstart": true,
+        "adaptive_eta": false,
+        "warmstart_damping": 0.5,
+        "max_outer": 20
+      },
+      "runtime": 0.6270308876410127,
+      "outer_iter": 20,
+      "converged": false,
+      "final_delta_inf": 0.00030736876373624626,
+      "max_violation": 0.00025982105044183856,
+      "gt_error_rms": 0.07510248945133755,
+      "vel_rms": 0.023858129165288674,
+      "acc_rms": 0.002278871247330366,
+      "param_config": "{'warmstart': True, 'adaptive_eta': False, 'warmstart_damping': 0.5}"
+    },
+    {
+      "status": "success",
+      "config": {
+        "warmstart": true,
+        "adaptive_eta": false,
+        "warmstart_damping": 0.5,
+        "max_outer": 20
+      },
+      "runtime": 0.629602971021086,
+      "outer_iter": 20,
+      "converged": false,
+      "final_delta_inf": 0.00022719320667169928,
+      "max_violation": 0.000157758474377101,
+      "gt_error_rms": 0.06814768657277556,
+      "vel_rms": 0.023982073487488206,
+      "acc_rms": 0.0022584677388324814,
+      "param_config": "{'warmstart': True, 'adaptive_eta': False, 'warmstart_damping': 0.5}"
+    },
+    {
+      "status": "success",
+      "config": {
+        "warmstart": true,
+        "adaptive_eta": false,
+        "warmstart_damping": 0.7,
+        "max_outer": 20
+      },
+      "runtime": 0.6171841290779412,
+      "outer_iter": 20,
+      "converged": false,
+      "final_delta_inf": 8.764726603770096e-06,
+      "max_violation": 8.074978239430708e-06,
+      "gt_error_rms": 0.06383497257416522,
+      "vel_rms": 0.025475363307767025,
+      "acc_rms": 0.002522882057824343,
+      "param_config": "{'warmstart': True, 'adaptive_eta': False, 'warmstart_damping': 0.7}"
+    },
+    {
+      "status": "success",
+      "config": {
+        "warmstart": true,
+        "adaptive_eta": false,
+        "warmstart_damping": 0.7,
+        "max_outer": 20
+      },
+      "runtime": 0.6298802420496941,
+      "outer_iter": 20,
+      "converged": false,
+      "final_delta_inf": 0.00030736876373624626,
+      "max_violation": 0.00025982105044183856,
+      "gt_error_rms": 0.07510248945133755,
+      "vel_rms": 0.023858129165288674,
+      "acc_rms": 0.002278871247330366,
+      "param_config": "{'warmstart': True, 'adaptive_eta': False, 'warmstart_damping': 0.7}"
+    },
+    {
+      "status": "success",
+      "config": {
+        "warmstart": true,
+        "adaptive_eta": false,
+        "warmstart_damping": 0.7,
+        "max_outer": 20
+      },
+      "runtime": 0.6611413876526058,
+      "outer_iter": 20,
+      "converged": false,
+      "final_delta_inf": 0.00022719320667169928,
+      "max_violation": 0.000157758474377101,
+      "gt_error_rms": 0.06814768657277556,
+      "vel_rms": 0.023982073487488206,
+      "acc_rms": 0.0022584677388324814,
+      "param_config": "{'warmstart': True, 'adaptive_eta': False, 'warmstart_damping': 0.7}"
+    },
+    {
+      "status": "success",
+      "config": {
+        "warmstart": true,
+        "adaptive_eta": true,
+        "warmstart_damping": 0.5,
+        "max_outer": 20
+      },
+      "runtime": 0.6454565259627998,
+      "outer_iter": 20,
+      "converged": false,
+      "final_delta_inf": 8.764726603770096e-06,
+      "max_violation": 8.074978239430708e-06,
+      "gt_error_rms": 0.06383497257416522,
+      "vel_rms": 0.025475363307767025,
+      "acc_rms": 0.002522882057824343,
+      "param_config": "{'warmstart': True, 'adaptive_eta': True, 'warmstart_damping': 0.5}"
+    },
+    {
+      "status": "success",
+      "config": {
+        "warmstart": true,
+        "adaptive_eta": true,
+        "warmstart_damping": 0.5,
+        "max_outer": 20
+      },
+      "runtime": 0.6560410321690142,
+      "outer_iter": 20,
+      "converged": false,
+      "final_delta_inf": 0.00030736876373624626,
+      "max_violation": 0.00025982105044183856,
+      "gt_error_rms": 0.07510248945133755,
+      "vel_rms": 0.023858129165288674,
+      "acc_rms": 0.002278871247330366,
+      "param_config": "{'warmstart': True, 'adaptive_eta': True, 'warmstart_damping': 0.5}"
+    },
+    {
+      "status": "success",
+      "config": {
+        "warmstart": true,
+        "adaptive_eta": true,
+        "warmstart_damping": 0.5,
+        "max_outer": 20
+      },
+      "runtime": 0.6606176220811903,
+      "outer_iter": 20,
+      "converged": false,
+      "final_delta_inf": 0.00022719320667169928,
+      "max_violation": 0.000157758474377101,
+      "gt_error_rms": 0.06814768657277556,
+      "vel_rms": 0.023982073487488206,
+      "acc_rms": 0.0022584677388324814,
+      "param_config": "{'warmstart': True, 'adaptive_eta': True, 'warmstart_damping': 0.5}"
+    }
+  ],
+  "tolerance": [
+    {
+      "status": "success",
+      "config": {
+        "tol_outer": 0.001,
+        "max_outer": 50
+      },
+      "runtime": 0.25314480997622013,
+      "outer_iter": 6,
+      "converged": true,
+      "final_delta_inf": 0.0007226338149173223,
+      "max_violation": 0.0001644437114521613,
+      "gt_error_rms": 0.06384649467330628,
+      "vel_rms": 0.02547452116511819,
+      "acc_rms": 0.0025233097738942487,
+      "param_tol": 0.001
+    },
+    {
+      "status": "success",
+      "config": {
+        "tol_outer": 0.001,
+        "max_outer": 50
+      },
+      "runtime": 0.27541063725948334,
+      "outer_iter": 6,
+      "converged": true,
+      "final_delta_inf": 0.0007573024532779546,
+      "max_violation": 0.00022175623412021284,
+      "gt_error_rms": 0.07508156385756613,
+      "vel_rms": 0.02385833886811817,
+      "acc_rms": 0.002278783633606616,
+      "param_tol": 0.001
+    },
+    {
+      "status": "success",
+      "config": {
+        "tol_outer": 0.001,
+        "max_outer": 50
+      },
+      "runtime": 0.3282754407264292,
+      "outer_iter": 6,
+      "converged": true,
+      "final_delta_inf": 0.00066444860830655,
+      "max_violation": 0.00018760108501708617,
+      "gt_error_rms": 0.06814021148133764,
+      "vel_rms": 0.023982640295904425,
+      "acc_rms": 0.002258370094973581,
+      "param_tol": 0.001
+    },
+    {
+      "status": "success",
+      "config": {
+        "tol_outer": 0.0001,
+        "max_outer": 50
+      },
+      "runtime": 0.3372406829148531,
+      "outer_iter": 8,
+      "converged": true,
+      "final_delta_inf": 9.911922305037785e-05,
+      "max_violation": 1.1196801343121843e-05,
+      "gt_error_rms": 0.06383791956197532,
+      "vel_rms": 0.02547501637175643,
+      "acc_rms": 0.0025234462391661165,
+      "param_tol": 0.0001
+    },
+    {
+      "status": "success",
+      "config": {
+        "tol_outer": 0.0001,
+        "max_outer": 50
+      },
+      "runtime": 2.2212213007733226,
+      "outer_iter": 50,
+      "converged": false,
+      "final_delta_inf": 0.0002504648848126368,
+      "max_violation": 0.00022175623412021284,
+      "gt_error_rms": 0.07508156385756613,
+      "vel_rms": 0.02385833886811817,
+      "acc_rms": 0.002278783633606616,
+      "param_tol": 0.0001
+    },
+    {
+      "status": "success",
+      "config": {
+        "tol_outer": 0.0001,
+        "max_outer": 50
+      },
+      "runtime": 0.4367097089998424,
+      "outer_iter": 8,
+      "converged": true,
+      "final_delta_inf": 8.277600920276842e-05,
+      "max_violation": 6.58856576988276e-05,
+      "gt_error_rms": 0.06813441284466001,
+      "vel_rms": 0.023983178217759343,
+      "acc_rms": 0.0022574567015295863,
+      "param_tol": 0.0001
+    },
+    {
+      "status": "success",
+      "config": {
+        "tol_outer": 1e-05,
+        "max_outer": 50
+      },
+      "runtime": 0.45787096256390214,
+      "outer_iter": 11,
+      "converged": true,
+      "final_delta_inf": 4.857008023540894e-06,
+      "max_violation": 1.7965601016384225e-05,
+      "gt_error_rms": 0.06383859243372143,
+      "vel_rms": 0.02547496704232656,
+      "acc_rms": 0.002523161686883828,
+      "param_tol": 1e-05
+    },
+    {
+      "status": "success",
+      "config": {
+        "tol_outer": 1e-05,
+        "max_outer": 50
+      },
+      "runtime": 2.203800631221384,
+      "outer_iter": 50,
+      "converged": false,
+      "final_delta_inf": 0.0002504648848126368,
+      "max_violation": 0.00022175623412021284,
+      "gt_error_rms": 0.07508156385756613,
+      "vel_rms": 0.02385833886811817,
+      "acc_rms": 0.002278783633606616,
+      "param_tol": 1e-05
+    },
+    {
+      "status": "success",
+      "config": {
+        "tol_outer": 1e-05,
+        "max_outer": 50
+      },
+      "runtime": 0.5442010750994086,
+      "outer_iter": 10,
+      "converged": true,
+      "final_delta_inf": 9.74032820635972e-06,
+      "max_violation": 6.753170734585812e-05,
+      "gt_error_rms": 0.06813477791135751,
+      "vel_rms": 0.023983125739437543,
+      "acc_rms": 0.0022573147391456135,
+      "param_tol": 1e-05
+    },
+    {
+      "status": "success",
+      "config": {
+        "tol_outer": 1e-06,
+        "max_outer": 50
+      },
+      "runtime": 2.0432465141639113,
+      "outer_iter": 50,
+      "converged": false,
+      "final_delta_inf": 4.857008023540894e-06,
+      "max_violation": 1.7965601016384225e-05,
+      "gt_error_rms": 0.06383859243372143,
+      "vel_rms": 0.02547496704232656,
+      "acc_rms": 0.002523161686883828,
+      "param_tol": 1e-06
+    },
+    {
+      "status": "success",
+      "config": {
+        "tol_outer": 1e-06,
+        "max_outer": 50
+      },
+      "runtime": 2.211547367274761,
+      "outer_iter": 50,
+      "converged": false,
+      "final_delta_inf": 0.0002504648848126368,
+      "max_violation": 0.00022175623412021284,
+      "gt_error_rms": 0.07508156385756613,
+      "vel_rms": 0.02385833886811817,
+      "acc_rms": 0.002278783633606616,
+      "param_tol": 1e-06
+    },
+    {
+      "status": "success",
+      "config": {
+        "tol_outer": 1e-06,
+        "max_outer": 50
+      },
+      "runtime": 2.6821777666918933,
+      "outer_iter": 50,
+      "converged": false,
+      "final_delta_inf": 3.104597566029738e-06,
+      "max_violation": 6.753170734585812e-05,
+      "gt_error_rms": 0.06813477791135751,
+      "vel_rms": 0.023983125739437543,
+      "acc_rms": 0.0022573147391456135,
+      "param_tol": 1e-06
+    },
+    {
+      "status": "success",
+      "config": {
+        "tol_outer": 1e-07,
+        "max_outer": 50
+      },
+      "runtime": 2.0449174069799483,
+      "outer_iter": 50,
+      "converged": false,
+      "final_delta_inf": 4.857008023540894e-06,
+      "max_violation": 1.7965601016384225e-05,
+      "gt_error_rms": 0.06383859243372143,
+      "vel_rms": 0.02547496704232656,
+      "acc_rms": 0.002523161686883828,
+      "param_tol": 1e-07
+    },
+    {
+      "status": "success",
+      "config": {
+        "tol_outer": 1e-07,
+        "max_outer": 50
+      },
+      "runtime": 2.205392916686833,
+      "outer_iter": 50,
+      "converged": false,
+      "final_delta_inf": 0.0002504648848126368,
+      "max_violation": 0.00022175623412021284,
+      "gt_error_rms": 0.07508156385756613,
+      "vel_rms": 0.02385833886811817,
+      "acc_rms": 0.002278783633606616,
+      "param_tol": 1e-07
+    },
+    {
+      "status": "success",
+      "config": {
+        "tol_outer": 1e-07,
+        "max_outer": 50
+      },
+      "runtime": 2.6836956748738885,
+      "outer_iter": 50,
+      "converged": false,
+      "final_delta_inf": 3.104597566029738e-06,
+      "max_violation": 6.753170734585812e-05,
+      "gt_error_rms": 0.06813477791135751,
+      "vel_rms": 0.023983125739437543,
+      "acc_rms": 0.0022573147391456135,
+      "param_tol": 1e-07
+    }
+  ]
+}
