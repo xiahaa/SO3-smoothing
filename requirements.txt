@@ -1,0 +1,25 @@
+# SO(3) Tube Smoothing - Python Dependencies
+# Install with: pip install -r requirements.txt
+
+# Core numerical computing
+numpy>=1.20.0
+scipy>=1.7.0
+
+# Optimization and SOCP
+cvxpy>=1.3.0
+
+# Optional: ECOS solver (faster than SCS for small/medium problems)
+# Install with: pip install ecos
+# ecos>=2.0.7  # Uncomment if available
+
+# Visualization (for benchmarks)
+matplotlib>=3.3.0
+
+# Testing
+pytest>=7.0.0
+
+# Data downloading (for EuRoC dataset)
+requests>=2.25.0
+
+# Optional: for exact reproducibility (lock specific versions)
+# Run: pip install -r requirements-locked.txt

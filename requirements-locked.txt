@@ -1,0 +1,13 @@
+# SO(3) Tube Smoothing - Exact Dependency Versions for Reproducibility
+# Generated for exact package version locking
+# DO NOT edit manually - regenerate with: python scripts/lock_requirements.py
+
+numpy==1.26.4
+scipy==1.15.2
+cvxpy==1.4.2
+matplotlib==3.9.2
+pytest==9.0.2
+requests==2.32.3
+
+# Note: Versions based on current development environment
+# Update periodically after major dependency updates
