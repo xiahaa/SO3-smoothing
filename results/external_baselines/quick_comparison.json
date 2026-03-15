@@ -1,37 +1,126 @@
 [
   {
-    "M": 100,
     "method": "GTSAM",
-    "time": 0.06189179187640548,
-    "gt_err": 0.06395898629900308,
-    "viol": -0.027984402703662842
-  },
-  {
+    "runtime": 0.055368092842400074,
+    "tube_excess": -0.035307562029100764,
+    "avg_tube_excess": 0.0,
+    "max_violation": -0.035307562029100764,
+    "avg_violation": 0.0,
+    "feasible_rate": 1.0,
+    "gt_error_rms": 0.06276471825925152,
+    "gt_error_max": 0.13740822847906678,
+    "vel_rms": 0.10463802468070608,
+    "acc_rms": 0.1618111600977702,
+    "solver_info": {
+      "status": "success",
+      "elapsed_sec": 0.009103547781705856,
+      "final_error": 113.82201796875118,
+      "iterations": 100,
+      "solver": "GTSAM_LM"
+    },
     "M": 100,
-    "method": "Ceres-like",
-    "time": 5.155519417021424,
-    "gt_err": 0.04542855087250922,
-    "viol": 0.037017911090161754
+    "seed": 0
   },
   {
+    "method": "Ceres-like (SciPy)",
+    "runtime": 7.74218504037708,
+    "tube_excess": 0.011111550501176987,
+    "avg_tube_excess": 0.0008452492198006622,
+    "max_violation": 0.011111550501176987,
+    "avg_violation": 0.0008452492198006622,
+    "feasible_rate": 0.8,
+    "gt_error_rms": 0.07913219118911649,
+    "gt_error_max": 0.15811386932751006,
+    "vel_rms": 0.04662791438203409,
+    "acc_rms": 0.007394282252100714,
+    "solver_info": {
+      "status": "success",
+      "elapsed_sec": 7.642719588242471,
+      "cost": 1.3763295223350769,
+      "nfev": 32,
+      "success": true,
+      "solver": "Scipy_LM"
+    },
     "M": 100,
-    "method": "Ours",
-    "time": 0.5008345860987902,
-    "gt_err": 0.04706026470408055,
-    "viol": 0.01379575391460744
+    "seed": 0
   },
   {
-    "M": 200,
+    "method": "Ours (ADMM)",
+    "runtime": 0.619359367992729,
+    "tube_excess": 5.890105208153362e-05,
+    "avg_tube_excess": 1.9135227342292893e-06,
+    "max_violation": 5.890105208153362e-05,
+    "avg_violation": 1.9135227342292893e-06,
+    "feasible_rate": 0.9,
+    "gt_error_rms": 0.07633257149641247,
+    "gt_error_max": 0.153372046648921,
+    "vel_rms": 0.047527952022494914,
+    "acc_rms": 0.007657949555240083,
+    "outer_iter": 20,
+    "converged": false,
+    "M": 100,
+    "seed": 0
+  },
+  {
     "method": "GTSAM",
-    "time": 0.02162858983501792,
-    "gt_err": 0.06858874077876283,
-    "viol": -0.023280079786784397
+    "runtime": 0.01728494744747877,
+    "tube_excess": -0.028154425397663732,
+    "avg_tube_excess": 0.0,
+    "max_violation": -0.028154425397663732,
+    "avg_violation": 0.0,
+    "feasible_rate": 1.0,
+    "gt_error_rms": 0.05970466802433295,
+    "gt_error_max": 0.12382680776143883,
+    "vel_rms": 0.09004706678531103,
+    "acc_rms": 0.15588950703642487,
+    "solver_info": {
+      "status": "success",
+      "elapsed_sec": 0.017056810203939676,
+      "final_error": 127.99965259822147,
+      "iterations": 100,
+      "solver": "GTSAM_LM"
+    },
+    "M": 200,
+    "seed": 0
   },
   {
+    "method": "Ceres-like (SciPy)",
+    "runtime": 22.823943703901023,
+    "tube_excess": 0.005507187843389411,
+    "avg_tube_excess": 0.00016276948099539724,
+    "max_violation": 0.005507187843389411,
+    "avg_violation": 0.00016276948099539724,
+    "feasible_rate": 0.905,
+    "gt_error_rms": 0.06446779965416156,
+    "gt_error_max": 0.1779187244381225,
+    "vel_rms": 0.02527188618271547,
+    "acc_rms": 0.002487925162183907,
+    "solver_info": {
+      "status": "success",
+      "elapsed_sec": 22.823923610150814,
+      "cost": 0.7046433917527511,
+      "nfev": 24,
+      "success": true,
+      "solver": "Scipy_LM"
+    },
     "M": 200,
-    "method": "Ours",
-    "time": 1.5614729658700526,
-    "gt_err": 0.04557970743444135,
-    "viol": 0.015317008824712708
+    "seed": 0
+  },
+  {
+    "method": "Ours (ADMM)",
+    "runtime": 0.7983311386778951,
+    "tube_excess": 1.7965601016384225e-05,
+    "avg_tube_excess": 4.2505450211782756e-07,
+    "max_violation": 1.7965601016384225e-05,
+    "avg_violation": 4.2505450211782756e-07,
+    "feasible_rate": 0.925,
+    "gt_error_rms": 0.06383859243372143,
+    "gt_error_max": 0.17648986332180702,
+    "vel_rms": 0.02547496704232656,
+    "acc_rms": 0.002523161686883828,
+    "outer_iter": 20,
+    "converged": false,
+    "M": 200,
+    "seed": 0
   }
 ]

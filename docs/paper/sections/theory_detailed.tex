@@ -1,6 +1,6 @@
 \section{Theoretical Analysis}
 
-In this section, we provide theoretical analysis of the sequential convexification algorithm, including convergence properties and constraint violation bounds.
+In this section, we provide theoretical analysis of the sequential convexification algorithm, including convergence properties and tube-excess bounds.
 
 \subsection{Problem Formulation}
 
@@ -100,7 +100,7 @@ where $\epsilon_{\min} = \min_i \epsilon_i$, then the sequential convexification
 
 \begin{proof}
 At each iteration, the linearized constraint is satisfied: $\|r_i + J_i \delta_i\|_2 \leq \epsilon_i$.
-By Lemma 2, the actual constraint violation is bounded by the linearization error:
+By Lemma 2, the actual tube excess is bounded by the linearization error:
 \begin{equation}
 \|r_i(\phi + \delta)\|_2 \leq \|r_i + J_i \delta\|_2 + \frac{L_J}{2}\|\delta\|^2 \leq \epsilon_i + \frac{L_J \Delta^2}{2}
 \end{equation}
@@ -128,7 +128,7 @@ Theorem 1 predicts linear convergence, but the rate depends on problem condition
 This motivates using relaxed tolerances ($10^{-4}$) for real-time applications.
 
 \textbf{Constraint Satisfaction:}
-The $O(\Delta^2)$ violation bound explains the small constraint violations observed in experiments (typically $< 10^{-3}$ rad with $\Delta = 0.2$).
+The $O(\Delta^2)$ mismatch bound explains the small tube excess observed in experiments (typically $< 10^{-3}$ rad with $\Delta = 0.2$).
 
 \subsection{Complexity Analysis}
 

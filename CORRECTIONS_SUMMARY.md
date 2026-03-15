@@ -80,7 +80,7 @@ residual = 1.0 * np.exp(-0.15 * iterations) + 0.02 * np.random.randn(20)
 ### EuRoC Performance
 - Consistent runtime: ~8.7s for 1000 samples (200Hz)
 - Ground truth error: 0.032--0.035 rad (1.8°--2.0°)
-- All runs maintain tube feasibility (max violation < tube radius)
+- All runs maintain strong tube compliance (tube excess < tube radius)
 
 ## Files Modified/Created
 
@@ -111,7 +111,7 @@ residual = 1.0 * np.exp(-0.15 * iterations) + 0.02 * np.random.randn(20)
 1. **Convergence Analysis:** Investigate why strict convergence is slow and document recommended tolerances for practical use.
 2. **Larger Scale:** Test on M=5000, M=10000 to verify scaling claims (may require parameter tuning or more iterations).
 3. **Comparison Baselines:** Add comparison with established libraries (GTSAM, Ceres) as suggested in original review.
-4. **Theory Section:** Add convergence theorems or constraint violation bounds as mentioned in review.
+4. **Theory Section:** Add convergence theorems or tube-excess bounds as mentioned in review.
 
 ## Reproducibility
 

@@ -71,7 +71,7 @@ def tube_smooth_gtsam(
         initial.insert(i, R_init)
         
         # Tube constraint as prior with robust noise model
-        # Use Huber loss to approximate hard constraint
+        # Use Huber loss to approximate tube-bound compliance
         sigma = eps[i] / 3.0  # 3-sigma corresponds to tube radius
         noise_model = gtsam.noiseModel.Robust.Create(
             gtsam.noiseModel.mEstimator.Huber.Create(1.0),

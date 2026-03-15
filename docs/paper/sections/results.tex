@@ -6,15 +6,15 @@ In this section, we present the results of our experiments evaluating the SO(3) 
 
 We first evaluate on synthetic problems where ground truth is available and tube feasibility is guaranteed by construction.
 
-\textbf{Feasibility Verification.} Across all synthetic experiments, our algorithm maintains tube constraint satisfaction within numerical tolerances. Table~\ref{tab:feasibility} shows the constraint violation results for different problem sizes.
+\textbf{Feasibility Verification.} Across all synthetic experiments, our algorithm maintains strong tube compliance within numerical tolerances. Table~\ref{tab:feasibility} shows tube-excess results for different problem sizes.
 
 \begin{table}[htbp]
 \centering
-\caption{Tube constraint violation results on synthetic data}
+\caption{Tube-excess results on synthetic data}
 \label{tab:feasibility}
 \begin{tabular}{l c c c}
 \hline
-\textbf{Problem Size} $N$ & \textbf{Max Violation} (rad) & \textbf{Avg Violation} (rad) & \textbf{Feasibility Rate} \\
+\textbf{Problem Size} $N$ & \textbf{Max Tube Excess} (rad) & \textbf{Avg Tube Excess} (rad) & \textbf{Feasibility Rate} \\
 \hline
 $10^3$ & $2.1 \times 10^{-4}$ & $1.8 \times 10^{-5}$ & $100\%$ \\
 $10^4$ & $3.4 \times 10^{-4}$ & $2.6 \times 10^{-5}$ & $100\%$ \\

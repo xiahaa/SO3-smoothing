@@ -43,13 +43,13 @@ def compute_metrics(R_true, R_meas, R_hat, eps):
     """Compute evaluation metrics."""
     M = len(R_true)
     
-    # Constraint violation
+    # Tube excess relative to per-sample bounds
     violations = np.array([
         geodesic_angle(R_meas[i], R_hat[i]) - eps[i]
         for i in range(M)
     ])
-    max_violation = float(np.max(violations))
-    avg_violation = float(np.mean(np.maximum(violations, 0)))
+    tube_excess = float(np.max(violations))
+    avg_tube_excess = float(np.mean(np.maximum(violations, 0)))
     feasible_rate = float(np.mean(violations <= 1e-6))
     
     # Ground truth error
@@ -68,8 +68,10 @@ def compute_metrics(R_true, R_meas, R_hat, eps):
     acc_rms = float(np.sqrt(np.mean(np.sum(d2**2, axis=1))))
     
     return {
-        'max_violation': max_violation,
-        'avg_violation': avg_violation,
+        'tube_excess': tube_excess,
+        'avg_tube_excess': avg_tube_excess,
+        'max_violation': tube_excess,
+        'avg_violation': avg_tube_excess,
         'feasible_rate': feasible_rate,
         'gt_error_rms': gt_error_rms,
         'gt_error_max': gt_error_max,
@@ -192,7 +194,7 @@ def run_comparison(M_values: List[int], n_seeds: int = 3) -> List[Dict]:
                 if result.get('status') != 'failed':
                     print(f"    GTSAM: {result['runtime']:.3f}s, "
                           f"gt_err={result['gt_error_rms']:.4f}, "
-                          f"viol={result['max_violation']:.4f}")
+                          f"tube_excess={result['tube_excess']:.4f}")
             except Exception as e:
                 print(f"    GTSAM failed: {e}")
             
@@ -205,7 +207,7 @@ def run_comparison(M_values: List[int], n_seeds: int = 3) -> List[Dict]:
                 if result.get('status') != 'failed':
                     print(f"    Ceres: {result['runtime']:.3f}s, "
                           f"gt_err={result['gt_error_rms']:.4f}, "
-                          f"viol={result['max_violation']:.4f}")
+                          f"tube_excess={result['tube_excess']:.4f}")
             except Exception as e:
                 print(f"    Ceres failed: {e}")
             
@@ -218,7 +220,7 @@ def run_comparison(M_values: List[int], n_seeds: int = 3) -> List[Dict]:
                 if result.get('status') != 'failed':
                     print(f"    Ours:  {result['runtime']:.3f}s, "
                           f"gt_err={result['gt_error_rms']:.4f}, "
-                          f"viol={result['max_violation']:.4f}")
+                          f"tube_excess={result['tube_excess']:.4f}")
             except Exception as e:
                 print(f"    Ours failed: {e}")
             
@@ -252,7 +254,7 @@ def generate_latex_table(all_results: List[Dict], M_values: List[int]):
         print(f"\\label{{tab:baseline_m{M}}}")
         print(r"\begin{tabular}{l c c c c c}")
         print(r"\hline")
-        print(r"\textbf{Method} & \textbf{Runtime} & \textbf{GT Error} & \textbf{Max Viol} & \textbf{Feasible} & \textbf{Acc RMS} \\")
+        print(r"\textbf{Method} & \textbf{Runtime} & \textbf{GT Error} & \textbf{Tube Excess} & \textbf{Feasible} & \textbf{Acc RMS} \\")
         print(r"& \textbf{(s)} & \textbf{(rad)} & \textbf{(rad)} & \textbf{Rate} & \textbf{(rad/s$^2$)} \\")
         print(r"\hline")
         
@@ -268,7 +270,7 @@ def generate_latex_table(all_results: List[Dict], M_values: List[int]):
             gt_err_mean = np.mean([r['gt_error_rms'] for r in group])
             gt_err_std = np.std([r['gt_error_rms'] for r in group])
             
-            max_viol_mean = np.mean([r['max_violation'] for r in group])
+            tube_excess_mean = np.mean([r['tube_excess'] for r in group])
             
             feas_rate = np.mean([r['feasible_rate'] for r in group]) * 100
             
@@ -280,7 +282,7 @@ def generate_latex_table(all_results: List[Dict], M_values: List[int]):
             print(f"{short_name} & "
                   f"${runtime_mean:.3f} \\pm {runtime_std:.3f}$ & "
                   f"${gt_err_mean:.4f} \\pm {gt_err_std:.4f}$ & "
-                  f"${max_viol_mean:.4f}$ & "
+                  f"${tube_excess_mean:.4f}$ & "
                   f"${feas_rate:.0f}\\%$ & "
                   f"${acc_mean:.4f}$ \\")
         
@@ -330,17 +332,17 @@ def print_summary(all_results: List[Dict]):
             continue
         group = methods[method_name]
         gt_err = np.mean([r['gt_error_rms'] for r in group])
-        max_viol = np.mean([r['max_violation'] for r in group])
+        tube_excess = np.mean([r['tube_excess'] for r in group])
         feas_rate = np.mean([r['feasible_rate'] for r in group]) * 100
         
         print(f"  {method_name:25s}: GT error={gt_err:.4f} rad, "
-              f"Max viol={max_viol:.4f} rad, Feasible={feas_rate:.0f}%")
+              f"Tube excess={tube_excess:.4f} rad, Feasible={feas_rate:.0f}%")
     
     print("\n\n3. KEY FINDINGS:")
     print("-" * 60)
     print("  • GTSAM: Very fast but uses soft constraints (robust loss)")
-    print("  • Ceres-like: Slower but good constraint satisfaction")
-    print("  • Ours: Balanced speed with hard constraint guarantees")
+    print("  • Ceres-like: Slower with moderate positive tube excess")
+    print("  • Ours: Balanced speed with low tube excess in reported runs")
 
 
 def main():
@@ -378,10 +380,10 @@ These results can be integrated into the paper as:
 2. Key distinctions:
    - GTSAM: Factor graph, soft constraints, very fast
    - Ceres: Nonlinear least squares, iterative
-   - Ours: Custom ADMM, hard constraints, specialized
+   - Ours: Custom ADMM, explicit tube-excess diagnostics, specialized
 
 3. Limitations to acknowledge:
-   - GTSAM uses robust loss (Huber) not hard constraints
+   - GTSAM uses robust loss (Huber), not explicit strict-feasibility constraints
    - Ceres-like uses SciPy (pure Python overhead)
    - Fair comparison would require custom Ceres cost functions
 """)

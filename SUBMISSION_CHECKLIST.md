@@ -107,7 +107,7 @@ supplementary_materials/
 ### Ensure the Paper Claims:
 
 ✅ **Correct:**
-- "Hard constraint satisfaction with violations < 10^-3 rad"
+- "Near-zero tube excess (typically < 10^-3 rad on synthetic runs)"
 - "5-10× speedup over generic SOCP solvers"
 - "Tested on problems up to M=1,000 rotations"
 - "Real-world validation on 5 EuRoC MAV sequences"
@@ -120,10 +120,10 @@ supplementary_materials/
 - ~~"Novel algorithmic breakthrough"~~ (incremental contribution)
 
 ### Revised Positioning Statement:
-> "We present an efficient open-source implementation of hard-constrained 
+> "We present an efficient open-source implementation of bounded-error 
 > SO(3) tube smoothing that bridges the gap between the speed of existing 
-> libraries (GTSAM) and the constraint satisfaction of generic nonlinear 
-> programming."
+> libraries (e.g., GTSAM) and explicit tube-compliance diagnostics available 
+> in constrained nonlinear formulations."
 
 ---
 
@@ -132,16 +132,16 @@ supplementary_materials/
 ### Expected Reviewer Questions:
 
 **Q1: Why not use GTSAM directly?**
-- A: GTSAM uses soft constraints (robust loss), not hard bounds
-- Our method is the only one with guaranteed constraint satisfaction
+- A: GTSAM uses soft constraints (robust loss), not explicit tube-bound enforcement
+- Our method directly reports tube excess and feasible-rate diagnostics
 
 **Q2: Why is convergence slow?**
 - A: Strict tolerance (10^-6) requires many iterations
 - For real-time, use relaxed tolerance (10^-4) - see ablation study
 
 **Q3: How does this compare to [some paper]?**
-- A: We compare with GTSAM and Ceres (state-of-the-art)
-- Our unique contribution is hard constraints with competitive speed
+- A: We compare with GTSAM and Ceres-like baselines
+- Our contribution is bounded-error tube smoothing with explicit compliance diagnostics and competitive runtime
 
 **Q4: Is the code available?**
 - A: Yes, fully open-source with reproducible benchmarks

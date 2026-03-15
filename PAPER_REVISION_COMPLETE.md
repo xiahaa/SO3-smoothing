@@ -65,7 +65,7 @@ This document summarizes all corrections and improvements made to address the re
 - Generated real metrics from actual ground truth
 
 **Real Results:**
-| Sequence | Runtime | GT Error | Max Violation |
+| Sequence | Runtime | GT Error | Tube Excess |
 |----------|---------|----------|---------------|
 | MH_01_easy | 8.70s | 0.0323 rad | 0.0124 rad |
 | MH_02_easy | 8.67s | 0.0349 rad | -0.0600 rad |
@@ -137,7 +137,7 @@ This document summarizes all corrections and improvements made to address the re
 **Created:** `scripts/run_baseline_comparison.py`
 
 **Compared Methods:**
-| Method | Runtime | GT Error | Max Violation | Feasible |
+| Method | Runtime | GT Error | Tube Excess | Feasible |
 |--------|---------|----------|---------------|----------|
 | Unconstrained | 0.01s | 0.9235 rad | 1.5200 rad | 1% |
 | Single-Pass | 0.06s | 0.0696 rad | 0.0021 rad | 87% |
@@ -196,7 +196,7 @@ This document summarizes all corrections and improvements made to address the re
 
 **Results (M=100, 200; seed=42):**
 
-| Method | M=100 | M=200 | GT Error | Violation |
+| Method | M=100 | M=200 | GT Error | Tube Excess |
 |--------|-------|-------|----------|-----------|
 | GTSAM | 0.062s | 0.022s | 0.066 rad | -0.026 rad |
 | Ceres-like | 5.156s | N/A | 0.045 rad | 0.037 rad |
@@ -205,10 +205,10 @@ This document summarizes all corrections and improvements made to address the re
 **Key Distinction:**
 - **GTSAM:** Fastest, but soft constraints only
 - **Ceres:** Accurate, but slow (Python overhead)
-- **Ours:** Only method with hard constraint guarantees
+- **Ours:** Method with explicit tube-excess diagnostics and low observed excess
 
 **Positioning:**
-> "Our specialized ADMM solver bridges the gap between the speed of GTSAM and the constraint satisfaction of generic nonlinear programming."
+> "Our specialized ADMM solver bridges the gap between the speed of GTSAM and explicit tube-compliance diagnostics from constrained nonlinear formulations."
 
 **Files:**
 - Wrapper: `src/baseline_wrappers.py`
@@ -305,15 +305,15 @@ docs/paper/figures/
 > "A novel algorithm with superior scaling and convergence"
 
 ### Revised Claim (Honest)
-> "An efficient open-source implementation of hard-constrained SO(3) tube smoothing with:
+> "An efficient open-source implementation of bounded-error SO(3) tube smoothing with:
 > - Validated performance on real-world datasets
 > - Comprehensive ablation study for parameter selection
-> - Competitive speed compared to GTSAM (with hard constraint guarantees)
-> - Theoretical convergence and feasibility guarantees"
+> - Competitive speed compared to GTSAM with explicit tube-compliance reporting
+> - Theoretical convergence with supporting feasibility analysis"
 
 ### What the Paper Actually Shows
 ✅ **Valid:** 5-10× speedup over generic SOCP solvers
-✅ **Valid:** Hard constraint satisfaction (unlike GTSAM)
+✅ **Valid:** Low tube excess with explicit compliance diagnostics (unlike GTSAM's soft constraints)
 ✅ **Valid:** Practical for M=1000 (10s runtime)
 ✅ **Valid:** Works on real EuRoC data
 
@@ -395,7 +395,7 @@ All results saved as JSON with full provenance.
 - Open-source with reproducible benchmarks
 
 **Limitations:**
-- Specialized to hard constraints (different use case than GTSAM)
+- Specialized to bounded-error tube compliance (different use case than GTSAM)
 - Moderate speed (not the fastest, but with guarantees)
 - Limited scalability testing (up to M=1000)
 

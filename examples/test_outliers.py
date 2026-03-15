@@ -78,7 +78,7 @@ def main() -> None:
 
     print(f"Added {n_outliers} outliers ({100*outlier_rate:.0f}%) at indices: {true_outlier_indices[:10]}...")
 
-    # Test 1: Without slack (should violate constraints on outliers)
+    # Test 1: Without slack (typically yields positive tube excess on outliers)
     print("\n--- Test 1: Without Slack Variables ---")
     R_hat_no_slack, info_no_slack = tube_smooth_fast(
         R_noisy, eps, lam, mu, tau,
@@ -102,8 +102,8 @@ def main() -> None:
     print(f"Outer iterations: {info_no_slack['outer_iter']}")
     print(f"Runtime: {info_no_slack['elapsed_sec']:.4f} s")
     print(f"GT error RMS: {error_no_slack:.4f} rad")
-    print(f"Max constraint violation: {max_violation_no_slack:.4f} rad")
-    print(f"Avg positive violation: {avg_violation_no_slack:.4f} rad")
+    print(f"Max tube excess: {max_violation_no_slack:.4f} rad")
+    print(f"Avg positive tube excess: {avg_violation_no_slack:.4f} rad")
 
     # Test 2: With slack (should identify and accommodate outliers)
     print("\n--- Test 2: With Slack Variables ---")
@@ -136,8 +136,8 @@ def main() -> None:
         print(f"Outer iterations: {info_slack['outer_iter']}")
         print(f"Runtime: {info_slack['elapsed_sec']:.4f} s")
         print(f"GT error RMS: {error_slack:.4f} rad")
-        print(f"Max constraint violation: {max_violation_slack:.4f} rad")
-        print(f"Avg positive violation: {avg_violation_slack:.4f} rad")
+        print(f"Max tube excess: {max_violation_slack:.4f} rad")
+        print(f"Avg positive tube excess: {avg_violation_slack:.4f} rad")
         print(f"Active slack indices: {len(active_slack)}")
         print(f"Outlier recovery rate: {100*outlier_recovery_rate:.1f}%")
         print(f"Recovered outliers: {np.intersect1d(active_slack, true_outlier_indices)[:10]}...")

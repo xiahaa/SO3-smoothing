@@ -98,7 +98,8 @@ def verify_euroc_results() -> bool:
         print(f"    {seq['sequence']}: "
               f"runtime={seq['runtime']:.2f}s, "
               f"gt_error={seq['gt_error_rms']:.4f}rad, "
-              f"violation={seq['max_violation']:.4f}rad")
+              f"tube_excess={seq['tube_excess']:.4f}rad, "
+              f"feasible_rate={100.0*seq['feasible_rate']:.1f}%")
     
     return True
 

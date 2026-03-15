@@ -97,8 +97,8 @@ def run_single_trial(
             geodesic_angle(R_meas[i], R_hat[i]) - eps[i] 
             for i in range(M_actual)
         ])
-        max_violation = float(np.max(violations))
-        avg_violation = float(np.mean(np.maximum(violations, 0)))
+        tube_excess = float(np.max(violations))
+        avg_tube_excess = float(np.mean(np.maximum(violations, 0)))
         
         # Ground truth error
         gt_errors = np.array([
@@ -124,8 +124,10 @@ def run_single_trial(
             'outer_iter': info.get('outer_iter', 0),
             'converged': info.get('converged', False),
             'final_delta_inf': info.get('final_delta_inf', np.inf),
-            'max_violation': max_violation,
-            'avg_violation': avg_violation,
+            'tube_excess': tube_excess,
+            'avg_tube_excess': avg_tube_excess,
+            'max_violation': tube_excess,
+            'avg_violation': avg_tube_excess,
             'gt_error_rms': gt_error_rms,
             'vel_rms': vel_rms,
             'acc_rms': acc_rms,
@@ -168,7 +170,7 @@ def run_scaling_benchmark(
             admm_results.append(result)
             if result['status'] == 'success':
                 print(f"{result['total_time']:.2f}s, "
-                      f"viol={result['max_violation']:.4f}, "
+                      f"tube_excess={result['tube_excess']:.4f}, "
                       f"conv={result['converged']}")
             else:
                 print(f"FAILED: {result.get('error', 'unknown')}")
@@ -193,6 +195,8 @@ def run_scaling_benchmark(
             summary[f'M={M}'] = {
                 'admm_time_mean': np.mean([r['total_time'] for r in successful_admm]),
                 'admm_time_std': np.std([r['total_time'] for r in successful_admm]),
+                'admm_tube_excess_mean': np.mean([r['tube_excess'] for r in successful_admm]),
+                'admm_tube_excess_mean': np.mean([r['tube_excess'] for r in successful_admm]),
                 'admm_violation_mean': np.mean([r['max_violation'] for r in successful_admm]),
                 'admm_converged_rate': sum(r['converged'] for r in successful_admm) / len(successful_admm),
                 'admm_outer_iter_mean': np.mean([r['outer_iter'] for r in successful_admm]),
@@ -233,8 +237,8 @@ def print_latex_table(summary: Dict[str, Any]) -> None:
     print(r"\begin{tabular}{l c c c c c}")
     print(r"\hline")
     print(r"\textbf{Size} $N$ & \textbf{ADMM} & \textbf{SOCP} & \textbf{Speedup} & "
-          r"\textbf{Conv. Rate} & \textbf{Violation (rad)} \\")
-    print(r"& \textbf{Time (s)} & \textbf{Time (s)} & & & \textbf{Max / Avg} \\")
+          r"\textbf{Conv. Rate} & \textbf{Tube Excess (rad)} \\")
+    print(r"& \textbf{Time (s)} & \textbf{Time (s)} & & & \textbf{Max} \\")
     print(r"\\")
     print(r"\hline")
     
@@ -256,11 +260,11 @@ def print_latex_table(summary: Dict[str, Any]) -> None:
             speedup_str = "N/A"
         
         conv_rate = data['admm_converged_rate'] * 100
-        violation = data['admm_violation_mean']
+        tube_excess = data['admm_tube_excess_mean']
         
         print(f"${M}$ & ${admm_time:.2f} \\pm {admm_std:.2f}$ & "
               f"{socp_str} & {speedup_str} & {conv_rate:.0f}% & "
-              f"${violation:.4f}$ \\")
+              f"${tube_excess:.4f}$ \\")
     
     print(r"\hline")
     print(r"\multicolumn{6}{l}{\textit{Results averaged over 5 random seeds. "

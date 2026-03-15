@@ -67,7 +67,7 @@ Full (Ours):     0.89s, GT error 0.0677 rad, feasible 93%
 ```
 GTSAM:      0.062s (M=100), 0.022s (M=200), soft constraints
 Ceres-like: 5.156s (M=100), accurate but slow
-Ours:       0.501s (M=100), 1.561s (M=200), hard constraints
+Ours:       0.619s (M=100), 0.798s (M=200), low tube excess
 ```
 
 ### 5. Theoretical Analysis
@@ -134,7 +134,7 @@ results/
 > "A novel algorithm with superior scaling and convergence"
 
 ### Revised (Honest)
-> "An efficient open-source implementation of hard-constrained SO(3) tube 
+> "An efficient open-source implementation of bounded-error SO(3) tube 
 > smoothing with validated performance, comprehensive parameter analysis, 
 > and theoretical guarantees—bridging the gap between the speed of GTSAM 
 > and the constraint satisfaction of generic nonlinear programming."

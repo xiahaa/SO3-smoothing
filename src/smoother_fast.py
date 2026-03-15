@@ -371,6 +371,8 @@ def tube_smooth_fast(
     info: Dict[str, Any] = {
         "outer_iter": len(objective_hist),
         "objective": objective_hist,
+        "tube_excess": max_violation_hist,
+        "avg_tube_excess": avg_violation_hist,
         "max_violation": max_violation_hist,
         "avg_violation": avg_violation_hist,
         "inner_stats": inner_stats_hist,

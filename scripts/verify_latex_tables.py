@@ -166,7 +166,7 @@ Table 1: Scaling Benchmark (tab:scaling_real)
 
 Table 2: EuRoC Validation (tab:euroc_real)
   - 5 sequences (MH_01 to MH_05)
-  - Runtime, GT error, constraint violation
+  - Runtime, GT error, tube excess
   - Real EuRoC data
 
 Table 3: Rho Ablation (tab:ablation_rho)

@@ -46,13 +46,13 @@ def compute_metrics(R_true, R_meas, R_hat, eps):
     """Compute evaluation metrics."""
     M = len(R_true)
     
-    # Constraint violation
+    # Tube excess relative to per-sample bounds
     violations = np.array([
         geodesic_angle(R_meas[i], R_hat[i]) - eps[i]
         for i in range(M)
     ])
-    max_violation = float(np.max(violations))
-    avg_violation = float(np.mean(np.maximum(violations, 0)))
+    tube_excess = float(np.max(violations))
+    avg_tube_excess = float(np.mean(np.maximum(violations, 0)))
     feasible_rate = float(np.mean(violations <= 1e-6))
     
     # Ground truth error
@@ -71,8 +71,10 @@ def compute_metrics(R_true, R_meas, R_hat, eps):
     acc_rms = float(np.sqrt(np.mean(np.sum(d2**2, axis=1))))
     
     return {
-        'max_violation': max_violation,
-        'avg_violation': avg_violation,
+        'tube_excess': tube_excess,
+        'avg_tube_excess': avg_tube_excess,
+        'max_violation': tube_excess,
+        'avg_violation': avg_tube_excess,
         'feasible_rate': feasible_rate,
         'gt_error_rms': gt_error_rms,
         'gt_error_max': gt_error_max,
@@ -217,7 +219,7 @@ def generate_latex_table(all_results: List[Dict]):
     print(r"\begin{tabular}{l c c c c c}")
     print(r"\hline")
     print(r"\textbf{Method} & \textbf{Runtime} & \textbf{GT Error} & "
-          r"\textbf{Max Viol} & \textbf{Feasible} & \textbf{Acc RMS} \\")
+          r"\textbf{Tube Excess} & \textbf{Feasible} & \textbf{Acc RMS} \\")
     print(r"& \textbf{(s)} & \textbf{(rad)} & \textbf{(rad)} & "
           r"\textbf{Rate} & \textbf{(rad/s$^2$)} \\")
     print(r"\hline")
@@ -234,7 +236,7 @@ def generate_latex_table(all_results: List[Dict]):
         gt_err_mean = np.mean([r['gt_error_rms'] for r in group])
         gt_err_std = np.std([r['gt_error_rms'] for r in group])
         
-        max_viol_mean = np.mean([r['max_violation'] for r in group])
+        tube_excess_mean = np.mean([r['tube_excess'] for r in group])
         
         feas_rate = np.mean([r['feasible_rate'] for r in group]) * 100
         
@@ -244,7 +246,7 @@ def generate_latex_table(all_results: List[Dict]):
         print(f"{method_display} & "
               f"${runtime_mean:.2f} \\pm {runtime_std:.2f}$ & "
               f"${gt_err_mean:.4f} \\pm {gt_err_std:.4f}$ & "
-              f"${max_viol_mean:.4f}$ & "
+              f"${tube_excess_mean:.4f}$ & "
               f"${feas_rate:.0f}\\%$ & "
               f"${acc_mean:.4f}$ \\")
     
@@ -267,15 +269,15 @@ def print_analysis(all_results: List[Dict]):
             methods[method] = []
         methods[method].append(r)
     
-    print("\n1. CONSTRAINT FEASIBILITY:")
+    print("\n1. TUBE COMPLIANCE:")
     print("-" * 40)
     for method_name in ['Unconstrained', 'Single-Pass (Ours)', 'Full (Ours)']:
         if method_name not in methods:
             continue
         group = methods[method_name]
-        max_viol = np.mean([r['max_violation'] for r in group])
+        tube_excess = np.mean([r['tube_excess'] for r in group])
         feas_rate = np.mean([r['feasible_rate'] for r in group]) * 100
-        print(f"  {method_name:20s}: Max viol={max_viol:.4f} rad, Feasible={feas_rate:.0f}%")
+        print(f"  {method_name:20s}: Tube excess={tube_excess:.4f} rad, Feasible={feas_rate:.0f}%")
     
     print("\n2. SOLUTION QUALITY (GT Error):")
     print("-" * 40)
@@ -297,9 +299,9 @@ def print_analysis(all_results: List[Dict]):
     
     print("\n4. KEY FINDINGS:")
     print("-" * 40)
-    print("  • Unconstrained: Fastest but no feasibility guarantees")
+    print("  • Unconstrained: Fastest but no bounded-error diagnostics")
     print("  • Single-Pass: Good balance of speed and feasibility")
-    print("  • Full method: Best feasibility but slower")
+    print("  • Full method: Lowest tube excess but slower")
 
 
 def main():

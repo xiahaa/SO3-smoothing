@@ -66,7 +66,7 @@ def regenerate_tables(results_dir: Path) -> None:
                         result['total_time'] = float(parts[1].strip().split()[0])
                     except ValueError:
                         pass
-            elif 'Max constraint violation' in line:
+            elif 'Max tube excess' in line or 'Max constraint violation' in line:
                 parts = line.split(':')
                 if len(parts) > 1:
                     try:

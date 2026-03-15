@@ -4,7 +4,7 @@ Rotation smoothing on SO(3) has been studied extensively in the estimation and c
 
 \subsection{Rotation Smoothing and Denoising}
 
-Early work on rotation smoothing focused on minimizing energy functions penalizing angular velocity and acceleration. Sorkine-Horn~\cite{sorkine_horn} introduced quaternion-based formulations for smoothing rotation sequences, while Markley et al.~\cite{markley} developed spline-based approaches for interpolating orientations. These methods typically assume Gaussian noise and do not enforce hard constraints on the estimation error.
+Early work on rotation smoothing focused on minimizing energy functions penalizing angular velocity and acceleration. Sorkine-Horn~\cite{sorkine_horn} introduced quaternion-based formulations for smoothing rotation sequences, while Markley et al.~\cite{markley} developed spline-based approaches for interpolating orientations. These methods typically assume Gaussian noise and do not enforce explicit bounded-error constraints on the estimation error.
 
 More recent work has addressed rotation smoothing on manifolds using variational and optimization techniques. Tzoufas et al.~\cite{tzoufas} proposed a manifold regression framework that penalizes smoothness while preserving geometric structure. Forsetti et al.~\cite{forsetti} developed spline methods on Lie groups for interpolation of rotation sequences with applications in motion planning. These approaches provide smooth results but lack mechanisms to enforce bounded-error constraints derived from sensor specifications.
 

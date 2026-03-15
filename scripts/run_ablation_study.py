@@ -2,7 +2,7 @@
 
 This script evaluates the impact of key parameters on:
 - Convergence speed
-- Solution quality (constraint violation, smoothness)
+- Solution quality (tube excess, smoothness)
 - Runtime
 """
 
@@ -74,7 +74,7 @@ def run_single_config(
             geodesic_angle(R_meas[i], R_hat[i]) - eps[i]
             for i in range(M)
         ])
-        max_violation = float(np.max(violations))
+        tube_excess = float(np.max(violations))
         
         gt_errors = np.array([
             geodesic_angle(R_true[i], R_hat[i])
@@ -96,7 +96,8 @@ def run_single_config(
             'outer_iter': info['outer_iter'],
             'converged': info['converged'],
             'final_delta_inf': info.get('final_delta_inf', np.inf),
-            'max_violation': max_violation,
+            'tube_excess': tube_excess,
+            'max_violation': tube_excess,
             'gt_error_rms': gt_error_rms,
             'vel_rms': vel_rms,
             'acc_rms': acc_rms,

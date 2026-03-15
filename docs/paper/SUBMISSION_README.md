@@ -123,7 +123,7 @@ Ensure the paper does NOT claim:
 ✅ **Do say:** "Near-linear scaling demonstrated up to M=1,000"
 
 ❌ **Don't say:** "Superior to all existing methods"
-✅ **Do say:** "Unique hard constraint guarantees with competitive speed"
+✅ **Do say:** "Near-zero tube excess with competitive speed and explicit feasibility diagnostics"
 
 ❌ **Don't say:** "Fast convergence to strict tolerance"
 ✅ **Do say:** "Practical convergence with relaxed tolerance for real-time use"

@@ -31,7 +31,7 @@
 
 % Title information
 \title{\LARGE \bf
-Hard-Constrained SO(3) Tube Smoothing via Sequential Convexification and Structured ADMM
+Bounded-Error Attitude Smoothing on SO(3) via Sequential Convexification and Structured ADMM
 }
 
 \author{Author One$^{1}$ and Author Two$^{2}$%
@@ -48,7 +48,7 @@ Hard-Constrained SO(3) Tube Smoothing via Sequential Convexification and Structu
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{abstract}
 
-We present an open-source implementation of hard-constrained rotation smoothing on $\SO$ that guarantees smoothed estimates remain within measurement-derived geodesic tubes. Unlike existing approaches that use soft constraints or penalty methods, our formulation enforces hard bounds specified by sensor error characteristics. We employ sequential convexification with trust-region management to handle the nonlinear manifold structure, and develop a custom ADMM solver that exploits the problem's block-banded Hessian structure for efficiency. Theoretical analysis provides convergence guarantees and constraint violation bounds. Comprehensive experimental validation on synthetic problems and real EuRoC MAV datasets demonstrates practical applicability. Comparisons with GTSAM and Ceres show our method provides unique hard constraint guarantees with competitive speed, achieving 5--10$\times$ speedup over generic SOCP solvers while maintaining constraint feasibility. All code and benchmarks are available at \url{https://github.com/username/SO3-smoothing}.
+We study batch attitude smoothing on $\SO$ under bounded measurement uncertainty, where each estimate is constrained by a geodesic tube derived from sensor error limits. The proposed solver combines sequential convexification with trust-region control and a structured ADMM inner loop that exploits block-banded Hessian structure. This yields a practical bounded-error smoothing pipeline that reports tube excess explicitly rather than relying only on soft penalties. Our analysis gives local convergence conditions and an $O(\Delta^2)$ bound on nonlinear mismatch induced by linearization. Experiments on synthetic trajectories and EuRoC MAV sequences demonstrate practical behavior in realistic inertial sensing settings. Relative to generic SOCP baselines, the implementation achieves 5--10$\times$ runtime speedups while keeping tube excess small compared with sensor-derived bounds. Code and reproducible scripts are available at \url{https://github.com/username/SO3-smoothing}.
 
 \end{abstract}
 
@@ -60,30 +60,30 @@ Rotation smoothing is a fundamental problem in robotics and computer vision, whe
 
 Traditional approaches to rotation smoothing typically assume Gaussian noise models and minimize energy functions penalizing angular velocity and acceleration. However, many practical scenarios involve bounded-error constraints where sensor specifications, calibration uncertainty, or safety requirements mandate that smoothed estimates remain within known geodesic bounds from the measurements. This set-membership formulation, first introduced in optimal estimation theory for linear systems, has received limited attention for nonlinear manifolds such as $\SO$.
 
-The challenges in $\SO$ rotation smoothing are threefold. First, the nonlinear manifold structure precludes direct application of linear smoothing techniques. Second, hard tube constraints make the optimization problem non-convex and computationally challenging. Third, the requirement to maintain feasibility with respect to all constraints demands careful handling of the manifold geometry during optimization.
+The challenges in $\SO$ attitude smoothing are threefold. First, the nonlinear manifold structure precludes direct application of linear smoothing techniques. Second, tube constraints yield a non-convex constrained problem when posed on the original manifold. Third, practical estimators must balance computational efficiency with explicit bounded-error diagnostics across long trajectories.
 
 \subsection{Contributions}
 
-We present a bounded-noise tube smoothing algorithm for $\SO$ that addresses these challenges. Our \textbf{primary contribution} is an \textbf{efficient open-source implementation} of hard-constrained rotation smoothing that bridges the gap between the speed of existing libraries (e.g., GTSAM) and the constraint satisfaction of generic nonlinear programming.
+We present a bounded-noise tube smoothing algorithm for $\SO$ that addresses these challenges. Our \textbf{primary contribution} is a \textbf{reproducible bounded-error attitude smoothing pipeline} that bridges fast manifold solvers and explicit bound-aware estimation.
 
 Specifically, we contribute:
 
-\textbf{1. Set-membership tube smoothing with hard constraints.} We formulate rotation smoothing as a bounded-noise estimation problem where each smoothed output must lie within a geodesic ball of radius $\epsilon_i$ around the corresponding measurement. Unlike existing approaches that use robust loss functions or penalty methods, we enforce hard constraints suitable for safety-critical applications.
+\textbf{1. Bounded-error attitude smoothing formulation.} We formulate smoothing as a set-membership problem on $\SO$ with per-sample geodesic tube constraints, preserving explicit sensor-bound structure instead of replacing it with soft penalties.
 
-\textbf{2. Sequential convexification with theoretical guarantees.} We employ local retractions on the manifold with trust-region management, providing convergence guarantees and constraint violation bounds. The trust region dynamically adjusts based on actual-to-predicted improvement ratios.
+\textbf{2. Sequential convexification with mismatch control.} We use local retractions with trust-region management, and provide local convergence conditions together with an explicit bound on nonlinear constraint mismatch caused by linearization.
 
-\textbf{3. Structured ADMM solver.} We design a custom ADMM solver that exploits the block-banded structure of the smoothing Hessian, enabling efficient sparse linear solves. The implementation includes warm-starting, adaptive parameters, and KKT verification.
+\textbf{3. Structured ADMM implementation for large batch problems.} We design a custom ADMM solver that exploits block-banded Hessian structure for efficient sparse linear solves, with warm starts and reusable linear algebra components.
 
-\textbf{4. Comprehensive experimental validation.} We provide extensive benchmarks on synthetic problems and real EuRoC MAV data, including ablation studies, comparisons with GTSAM and Ceres, and reproducible evaluation protocols.
+\textbf{4. Empirical validation with explicit bound diagnostics.} We report runtime, accuracy, and tube-excess behavior on synthetic data and EuRoC MAV sequences, with ablations and baseline comparisons.
 
 \subsection{Key Results}
 
 Our implementation achieves:
 \begin{itemize}
-\item \textbf{Hard constraint satisfaction:} Guaranteed feasibility with violations $<10^{-3}$ rad
-\item \textbf{Competitive speed:} 0.5--10s for problems with $M$=100--1000 rotations
+\item \textbf{Small tube excess:} Excess over tube bounds is typically $<10^{-3}$ rad on synthetic tests
+\item \textbf{Practical runtime:} 0.5--10 s for windows with $M=100$--$1000$ attitudes
 \item \textbf{Speedup over baselines:} 5--10$\times$ faster than generic SOCP solvers
-\item \textbf{Real-world validation:} Tested on 5 EuRoC MAV sequences with consistent performance
+\item \textbf{Real-data behavior:} Evaluated on 5 EuRoC MAV sequences with stable runtime
 \end{itemize}
 
 \subsection{Paper Organization}
@@ -94,17 +94,21 @@ Section~\ref{sec:related} reviews related work. Section~\ref{sec:methods} presen
 \section{Related Work}
 \label{sec:related}
 
-\subsection{Rotation Smoothing}
+\subsection{Attitude Estimation on $\SO$}
 
-Rotation smoothing on $\SO$ has been extensively studied. Boumal et al.\cite{boumal} established foundational results on optimization on manifolds. Recent works include spline-based approaches\cite{splines}, factor graph formulations\cite{gtsam}, and deep learning methods\cite{deep}. However, most existing approaches assume Gaussian noise and use unconstrained or soft-constrained formulations.
+Attitude estimation on $\SO$ has a long history in guidance, navigation, and tracking. Classical and nonlinear filters remain central in practice, including complementary-filter formulations directly posed on $\SO$~\cite{mahony2008} and modern invariant filtering analyses~\cite{barrau2017}. A broad overview of nonlinear attitude estimation methods is given in~\cite{crassidis2007}. In parallel, batch optimization and smoothing pipelines on manifolds have become standard in robotics and navigation, including manifold preintegration methods for inertial sensing~\cite{forster2015}.
 
-\subsection{Set-Membership Estimation}
+\subsection{Rotation Averaging and Manifold Optimization}
 
-Set-membership or bounded-error estimation dates to the 1960s\cite{schweppe}. For linear systems, efficient algorithms exist using ellipsoidal or polytopic sets. Extensions to nonlinear systems typically use interval analysis or sampling-based approaches. Our work applies set-membership concepts to the specific problem of rotation smoothing on $\SO$.
+Batch orientation estimation is closely related to rotation averaging, where substantial progress has been made on robust formulations and scalable optimization~\cite{hartley2013,dellaert2020}. These methods provide strong tools for estimating consistent orientation trajectories from relative measurements, but they are typically not formulated as per-sample bounded-error tube constraints tied to sensor-derived limits. Our work is complementary: we focus on bounded tube compliance with smoothness regularization in a direct smoothing formulation.
 
-\subsection{Tube MPC and Smoothing}
+\subsection{Bounded-Error and Set-Membership Estimation}
 
-Tube Model Predictive Control (MPC)\cite{tube_mpc} maintains system state within tubes around nominal trajectories. Recent work has applied similar concepts to trajectory optimization\cite{tube_trajopt}. Our approach differs in focusing on the smoothing (estimation) problem rather than control, and in specifically addressing the $\SO$ manifold structure.
+Bounded-error (set-membership) estimation provides a deterministic alternative to Gaussian assumptions when uncertainty is more naturally specified by known error bounds~\cite{walter1990,jaulin2001}. This viewpoint is well established in robust estimation and identification, but less common in practical $\SO$ trajectory smoothing workflows that must also scale to long sequences. Our formulation adopts this bounded-error perspective using geodesic tube constraints, and our solver design targets computational efficiency for large batch problems.
+
+\subsection{Positioning of This Work}
+
+Compared with unconstrained or soft-penalty smoothers, we preserve explicit per-sample tube bounds throughout sequential convexification and report tube excess explicitly in experiments. Compared with generic conic optimization approaches, we exploit block-banded structure with a tailored ADMM implementation inspired by structured large-scale optimization practice~\cite{boyd2011,boyd_scp}. The resulting contribution is primarily methodological and computational: a reproducible bounded-error $\SO$ smoothing pipeline with practical runtime gains and bounded linearization-mismatch analysis.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Methods}
@@ -131,6 +135,26 @@ The optimization problem is:
 \end{align}
 
 where $H$ is the smoothness Hessian and $r_i(\phi_i) = \log(R_{\text{meas},i}^T \exp(\phi_i^\wedge))$.
+
+\subsection{Measurement-Bound Construction}
+
+To connect the tube radii to sensor specifications, we model per-step attitude uncertainty from three components: gyro white noise, bias uncertainty, and residual calibration error. For sampling interval $\Delta t_i$, we define
+\begin{equation}
+\sigma_{\theta,i}^2
+=
+(\sigma_g \sqrt{\Delta t_i})^2
++
+(\sigma_b \Delta t_i)^2
++
+\sigma_c^2,
+\end{equation}
+where $\sigma_g$ is gyro noise density, $\sigma_b$ is bias uncertainty, and $\sigma_c$ is a calibration residual term (all in consistent units). The geodesic tube radius is then set as
+\begin{equation}
+\epsilon_i
+=
+\kappa\,\sigma_{\theta,i},
+\end{equation}
+with confidence factor $\kappa$ (e.g., $\kappa=3$ for conservative operation). This construction provides a reproducible mapping from sensor-level uncertainty assumptions to per-sample tube constraints used by the smoother.
 
 \subsection{Smoothness Hessian}
 
@@ -188,32 +212,32 @@ The linear system is sparse and banded, solved efficiently via sparse LU.
 \section{Conclusion}
 \label{sec:conclusion}
 
-We presented an efficient open-source implementation of hard-constrained SO(3) tube smoothing. Our approach guarantees that smoothed estimates remain within measurement-derived geodesic tubes, making it suitable for safety-critical applications where error bounds are specified by sensor characteristics.
+We presented an efficient implementation of bounded-error attitude smoothing on $\SO$. The method enforces tube constraints in convexified subproblems and reports final tube excess explicitly, providing a practical bounded-uncertainty smoothing tool for batch estimation workflows.
 
 \subsection{Summary}
 
 Our method provides:
 \begin{itemize}
-\item Hard constraint satisfaction with theoretical guarantees
-\item Competitive speed (5--10$\times$ faster than generic SOCP)
-\item Comprehensive validation on synthetic and real data
-\item Comparison with state-of-the-art (GTSAM, Ceres)
+\item A set-membership smoothing formulation on $\SO$ with geodesic tube constraints
+\item Local mismatch analysis linking trust-region size to nonlinear constraint error
+\item Structured ADMM runtime gains (5--10$\times$ versus generic SOCP baselines)
+\item Reproducible synthetic and EuRoC evaluations with explicit tube-excess metrics
 \end{itemize}
 
 \subsection{Limitations}
 
 \begin{itemize}
-\item Convergence to strict tolerance ($10^{-6}$) can be slow; practical use benefits from relaxed tolerances ($10^{-4}$)
-\item Scaling tested up to $M=1000$; very large problems ($M > 10^4$) may require multi-scale initialization
-\item Single-threaded implementation; GPU acceleration could provide further speedups
+\item Convergence to strict tolerances can be slow; practical operation favors relaxed stopping criteria
+\item Current scaling evidence is strongest for $M \leq 1000$ in the reported experiments
+\item The implementation is single-threaded and does not yet include production-grade real-time integration
 \end{itemize}
 
 \subsection{Future Work}
 \begin{itemize}
-\item Extension to SE(3) for full pose smoothing
-\item Multi-scale initialization for faster convergence
-\item GPU-accelerated projections for larger problems
-\item Online/streaming formulations for real-time applications
+\item Sensor-model-driven construction of tube bounds (including bias and calibration uncertainty)
+\item Extension to coupled attitude-dynamics smoothing models and SE(3) state estimation
+\item Stronger comparisons with established navigation estimators (e.g., invariant filtering/smoothing baselines)
+\item Online and multi-rate variants for tracking pipelines with asynchronous sensing
 \end{itemize}
 
 \subsection{Reproducibility}

@@ -1,6 +1,6 @@
 \section{Conclusion}
 
-In this paper, we presented a bounded-noise tube smoothing algorithm for SO(3) that combines set-membership estimation with sequential convexification and structured optimization. Our approach provides rigorous feasibility guarantees while maintaining computational efficiency through block-banded ADMM exploitation.
+In this paper, we presented a bounded-noise tube smoothing algorithm for SO(3) that combines set-membership estimation with sequential convexification and structured optimization. Our approach provides explicit tube-compliance diagnostics while maintaining computational efficiency through block-banded ADMM exploitation.
 
 \subsection{Summary of Contributions}
 
@@ -16,7 +16,7 @@ We made three primary contributions to rotation smoothing on SO(3):
 
 Our experiments demonstrate several important findings:
 
-\textbf{Feasibility with Minimal Quality Loss.} Compared to unconstrained smoothing, our method incurs only a 5\% increase in geodesic error while maintaining tube constraint satisfaction. This small trade-off is justified for safety-critical applications where bounded errors are more important than minimal error. The smoothness quality remains comparable, with angular velocity RMS within 10\% of the unconstrained baseline.
+\textbf{Tube Compliance with Minimal Quality Loss.} Compared to unconstrained smoothing, our method incurs only a 5\% increase in geodesic error while maintaining low tube excess in reported runs. This small trade-off is justified for safety-critical applications where bounded errors are more important than minimal error. The smoothness quality remains comparable, with angular velocity RMS within 10\% of the unconstrained baseline.
 
 \textbf{Computational Efficiency at Scale.} The structured ADMM solver enables solving large-scale problems efficiently. Problems with $N = 10^5$ rotation samples are solved in 21.5 seconds on a standard workstation, compared to 156.3 seconds for the SOCP baseline. The near-linear scaling makes our method practical for real-time and batch processing applications with large datasets.
 
@@ -28,9 +28,9 @@ Our experiments demonstrate several important findings:
 
 Our work has several practical implications for robotics and computer vision applications:
 
-\textbf{Safety-Critical Systems.} The set-membership formulation guarantees that smoothed estimates remain within known error bounds, which is essential for safety-critical applications such as autonomous vehicles, surgical robotics, and aerospace systems. Sensor specifications or calibration data directly provide the tube radii $\epsilon_i$, eliminating the need for risky parameter tuning in deployment.
+\textbf{Safety-Critical Systems.} The set-membership formulation supports explicit tube-compliance diagnostics relative to known error bounds, which is essential for safety-critical applications such as autonomous vehicles, surgical robotics, and aerospace systems. Sensor specifications or calibration data directly provide the tube radii $\epsilon_i$, eliminating the need for risky parameter tuning in deployment.
 
-\textbf{Large-Scale Processing.} The near-linear computational scaling enables processing of large rotation datasets that were previously impractical with general SOCP solvers. Applications such as long-term visual SLAM, IMU integration over hours of data, and batch processing of flight logs can now benefit from tube smoothing with feasibility guarantees.
+\textbf{Large-Scale Processing.} The near-linear computational scaling enables processing of large rotation datasets that were previously impractical with general SOCP solvers. Applications such as long-term visual SLAM, IMU integration over hours of data, and batch processing of flight logs can now benefit from tube smoothing with explicit tube-compliance diagnostics.
 
 \textbf{Integration with Existing Pipelines.} Our algorithm can be integrated as a post-processing step in existing rotation estimation pipelines. The modular design separates constraint satisfaction from optimization, allowing reuse of existing SO(3) utilities and integration with different constraint definitions (e.g., orientation constraints for IMU, bundle adjustment for vision).
 
@@ -54,9 +54,9 @@ Despite strong performance, our approach has several limitations that motivate f
 
 \subsection{Final Remarks}
 
-SO(3) rotation smoothing with bounded-error constraints provides a principled framework for ensuring safety and reliability in rotation estimation applications. Our combination of set-membership theory, sequential convexification, and structured optimization achieves strong theoretical guarantees with practical computational efficiency.
+SO(3) rotation smoothing with bounded-error constraints provides a principled framework for ensuring safety and reliability in rotation estimation applications. Our combination of set-membership theory, sequential convexification, and structured optimization achieves strong supporting analysis with practical computational efficiency.
 
-The results demonstrate that we can maintain hard feasibility constraints with minimal impact on solution quality, while achieving near-linear scaling to large problem sizes. The theoretical enhancements (warm-starting, adaptive trust-region, convergence estimation, and KKT verification) provide both rigorous foundations and practical benefits.
+The results demonstrate that we can maintain low tube excess with minimal impact on solution quality, while achieving near-linear scaling to large problem sizes. The theoretical enhancements (warm-starting, adaptive trust-region, convergence estimation, and KKT verification) provide both rigorous foundations and practical benefits.
 
 As robotics systems increasingly operate in safety-critical environments with large-scale data processing requirements, the ability to provide guaranteed error bounds with computational efficiency becomes more valuable. Our SO(3) tube smoothing algorithm represents a step toward bridging the gap between theoretical optimality and practical deployability in rotation estimation applications.
 

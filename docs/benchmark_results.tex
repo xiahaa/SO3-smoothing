@@ -5,7 +5,7 @@
 \label{tab:performance}
 \begin{tabular}{crrrr}
 \toprule
-$M$ & Time (s) & Outer Iters & Avg Inner Iters & Max Violation \\\n\midrule
+$M$ & Time (s) & Outer Iters & Avg Inner Iters & Max Tube Excess \\\n\midrule
 100 & 0.40 & 5 & 999.2 & $1.0 \times 10^{-4}$ \\\n1000 & 2.53 & 16 & 182.9 & $0.0$ \\\n5000 & 21.41 & 20 & 414.3 & $0.0$ \\\n10000 & 52.03 & 20 & 599.2 & $1.0 \times 10^{-4}$ \\\n\bottomrule
 \end{tabular}
 \end{table}
@@ -25,7 +25,7 @@ $M$ & Velocity RMS (rad/s) & Acceleration RMS (rad/s$^2$) \\\n\midrule
 % Key observations
 \begin{itemize}
 \item \textbf{Scalability:} Near-linear time complexity ($O(M)$) demonstrated across 2 orders of magnitude
-\item \textbf{Constraint satisfaction:} Max violation consistently $< 10^{-4}$ (well below $\epsilon=0.15\text{-}0.2$)
+\item \textbf{Tube compliance:} Max tube excess consistently $< 10^{-4}$ (well below $\epsilon=0.15\text{-}0.2$)
 \item \textbf{Smoothness improvement:} 99\% reduction in acceleration RMS compared to raw measurements
 \item \textbf{Convergence:} ADMM maintains stable iteration counts (150-600/outer) even at $M=10^4$
 \end{itemize}

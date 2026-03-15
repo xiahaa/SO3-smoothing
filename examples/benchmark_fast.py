@@ -43,7 +43,7 @@ def compute_metrics(R_true, R_meas, R_hat, eps):
     # Geodesic distances from true trajectory
     dists = np.array([geodesic_angle(R_true[i], R_hat[i]) for i in range(M)])
 
-    # Constraint violations
+    # Tube excess relative to per-sample bounds
     violations = np.array([geodesic_angle(R_meas[i], R_hat[i]) - eps[i] for i in range(M)])
     max_violation = np.max(violations)
     avg_violation = np.mean(np.maximum(violations, 0))
@@ -138,14 +138,14 @@ def validate_on_euroc():
     acc_rms_meas = np.sqrt(np.mean(np.sum(d2_meas**2, axis=1)))
     acc_rms_hat = np.sqrt(np.mean(np.sum(d2_hat**2, axis=1)))
 
-    # Constraint satisfaction
+    # Tube compliance
     violations = np.array([geodesic_angle(R_meas[i], R_hat[i]) - eps[i] for i in range(M)])
     max_violation = np.max(violations)
 
     print(f"Dataset size: M={M} rotations (100Hz for {M*tau:.1f}s)")
     print(f"Processing time: {elapsed:.2f}s ({M/elapsed:.1f} Hz)")
     print(f"Outer iterations: {info['outer_iter']}")
-    print(f"Max constraint violation: {max_violation:.4f} (threshold={eps[0]:.2f})")
+    print(f"Max tube excess: {max_violation:.4f} (threshold={eps[0]:.2f})")
     print(f"Acceleration RMS: {acc_rms_meas:.4f} → {acc_rms_hat:.4f} ({100*(1-acc_rms_hat/acc_rms_meas):.1f}% reduction)")
 
     # Ground truth validation if available
@@ -215,9 +215,9 @@ def benchmark_performance(M_list, params):
 
             print(f"Total time: {elapsed:.3f}s")
             print(f"Peak memory: {peak / 1024**2:.2f} MB")
-            print(f"Max constraint violation: {metrics['max_violation']:.4f}")
+            print(f"Max tube excess: {metrics['max_violation']:.4f}")
             print(f"Acceleration RMS: {metrics['acc_rms']:.4f}")
-            print(f"Constraint violation reduction: {100*(1 - metrics['max_violation']/np.max(eps)):.1f}%")
+            print(f"Tube-excess reduction: {100*(1 - metrics['max_violation']/np.max(eps)):.1f}%")
 
             results.append({
                 'method': method_name,
@@ -297,7 +297,7 @@ def plot_results(results):
     plt.legend()
     plt.grid(True, which="both", ls="-")
 
-    # Constraint violation
+    # Tube excess
     plt.subplot(2, 2, 2)
     for method in methods:
         m_results = method_results[method]
@@ -306,8 +306,8 @@ def plot_results(results):
         plt.semilogx(M_list, violations, 'o-', label=method)
     plt.axhline(y=0, color='r', linestyle='--', alpha=0.3)
     plt.xlabel('Problem size M')
-    plt.ylabel('Max constraint violation')
-    plt.title('Constraint Satisfaction')
+    plt.ylabel('Max tube excess')
+    plt.title('Tube Compliance')
     plt.legend()
     plt.grid(True, which="both", ls="-")
 
@@ -375,4 +375,4 @@ if __name__ == "__main__":
         if 'method' in r:  # Only process benchmark results with method info
             # Safely access keys with defaults to prevent KeyErrors
             outer_iter = r.get('outer_iter', 'N/A')
-            print(f"M={r['M']} ({r['method']}): time={r['total_time']:.2f}s, outer={outer_iter}, violation={r['max_violation']:.4f}")
+            print(f"M={r['M']} ({r['method']}): time={r['total_time']:.2f}s, outer={outer_iter}, tube_excess={r['max_violation']:.4f}")

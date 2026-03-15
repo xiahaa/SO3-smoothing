@@ -17,14 +17,14 @@ pip install pyceres     # PyCeres 2.6
 **Formulation:**
 - Factor graph with `PriorFactorRot3` for tube constraints
 - `BetweenFactorRot3` for smoothness constraints
-- Robust Huber loss to approximate hard constraints
+- Robust Huber loss to approximate tube compliance
 - Levenberg-Marquardt optimizer
 
 **Key Characteristics:**
 - Extremely fast (0.02-0.06s for M=100-200)
 - Uses soft constraints (robust loss, not hard bounds)
-- Solutions often strictly inside tube (negative violations)
-- May not satisfy hard constraint requirements
+- Solutions often strictly inside tube (negative tube excess)
+- May not satisfy strict tube-bound requirements
 
 ### 2. Ceres-like Wrapper (`src/baseline_wrappers.py`)
 
@@ -44,7 +44,7 @@ pip install pyceres     # PyCeres 2.6
 
 ### Quick Comparison (M=100, 200; seed=42)
 
-| Method | M=100 Time | M=200 Time | Avg GT Error | Avg Violation |
+| Method | M=100 Time | M=200 Time | Avg GT Error | Avg Tube Excess |
 |--------|------------|------------|--------------|---------------|
 | **GTSAM** | 0.062s | 0.022s | 0.0663 rad | -0.0256 rad |
 | **Ceres-like** | 5.156s | N/A | 0.0454 rad | 0.0370 rad |
@@ -98,7 +98,7 @@ M=200: 1.561s, gt_err=0.0456, viol=0.0153 (within tube)
 ```
 
 **Pros:**
-- Hard constraint guarantees (violations within tube)
+- Explicit tube-excess diagnostics (low excess in reported runs)
 - Good balance of speed and accuracy
 - Scalable to larger problems (tested to M=1000)
 - Specialized for SO(3) tube smoothing
@@ -108,17 +108,17 @@ M=200: 1.561s, gt_err=0.0456, viol=0.0153 (within tube)
 - More iterations needed for strict convergence
 - Custom implementation (less battle-tested)
 
-**Best for:** Applications requiring hard constraint satisfaction with reasonable speed.
+**Best for:** Applications requiring explicit tube-compliance diagnostics with reasonable speed.
 
 ## Key Distinctions
 
 ### 1. Constraint Handling
 
-| Method | Constraint Type | Guarantee |
+| Method | Constraint Type | Compliance Reporting |
 |--------|----------------|-----------|
 | GTSAM | Soft (Huber loss) | No hard guarantee |
 | Ceres | Penalty method | Approximate |
-| Ours | Hard constraints | Yes, by construction |
+| Ours | Tube constraints | Explicit tube-excess diagnostics |
 
 ### 2. Optimization Approach
 
@@ -140,14 +140,14 @@ M=200: 1.561s, gt_err=0.0456, viol=0.0153 (within tube)
 
 ### Limitations
 
-1. **GTSAM:** Uses robust loss instead of hard constraints (different problem formulation)
+1. **GTSAM:** Uses robust loss instead of explicit tube constraints (different problem formulation)
 2. **Ceres:** Python wrapper overhead (true Ceres in C++ would be faster)
 3. **All methods:** Different tolerance criteria and stopping conditions
 
 ### What This Comparison Shows
 
 ✅ **Relative performance:** GTSAM > Ours > Ceres (in Python) for speed
-✅ **Constraint quality:** Ours > Ceres > GTSAM for hard constraint satisfaction
+✅ **Tube-compliance quality:** Ours > Ceres > GTSAM for low tube excess
 ✅ **Accuracy:** All methods achieve similar GT errors (0.04-0.07 rad)
 
 ### What This Comparison Doesn't Show
@@ -167,8 +167,8 @@ M=200: 1.561s, gt_err=0.0456, viol=0.0153 (within tube)
 \label{tab:external_baselines}
 \begin{tabular}{l c c c c}
 \hline
-\textbf{Method} & \textbf{Runtime} & \textbf{GT Error} & \textbf{Constraint} & \textbf{Hard} \\
-& \textbf{(s)} & \textbf{(rad)} & \textbf{Violation} & \textbf{Guarantee} \\
+\textbf{Method} & \textbf{Runtime} & \textbf{GT Error} & \textbf{Tube} & \textbf{Strict-Feasible} \\
+& \textbf{(s)} & \textbf{(rad)} & \textbf{Excess} & \textbf{Guarantee} \\
 \hline
 GTSAM 4.3 & 0.04 & 0.066 & -0.026$^*$ & No \\
 Ceres-like (SciPy) & 5.16 & 0.045 & 0.037 & No \\
@@ -188,17 +188,17 @@ We compare our method against two established libraries:
 GTSAM 4.3 (factor graph) and Ceres Solver (nonlinear least squares).
 
 \textbf{GTSAM} uses robust loss functions (Huber) to approximate constraints,
-achieving exceptional speed (0.04s) but providing no hard constraint guarantees.
-The negative violation (-0.026 rad) indicates solutions strictly inside the tube,
+achieving exceptional speed (0.04s) but without explicit strict-feasibility guarantees.
+The negative tube excess (-0.026 rad) indicates solutions strictly inside the tube,
 potentially over-smoothing the trajectory.
 
 \textbf{Ceres} (via SciPy wrapper) uses penalty methods for constraints.
 It achieves good accuracy but suffers from Python overhead (5.16s).
 A native C++ implementation would be significantly faster.
 
-\textbf{Our method} is the only one providing hard constraint guarantees
+\textbf{Our method} is the only one providing explicit tube-excess diagnostics in this comparison
 with competitive speed. While 10$\times$ slower than GTSAM, we ensure
-feasibility which is critical for safety-critical applications.
+tube-compliance diagnostics, which are critical for safety-critical applications.
 ```
 
 ## Files Created
@@ -226,7 +226,7 @@ The external baseline comparison validates our approach:
 
 1. **GTSAM is faster** but uses soft constraints (different problem)
 2. **Ceres is similar** but slower in Python (C++ would be competitive)
-3. **Ours uniquely provides** hard constraint guarantees with reasonable speed
+3. **Ours provides** low tube excess with reasonable speed
 
 This positions our contribution as:
-> "A specialized solver for hard-constrained SO(3) smoothing that bridges the gap between the speed of GTSAM and the constraint satisfaction of generic nonlinear programming."
+> "A specialized solver for bounded-error SO(3) smoothing that bridges the gap between the speed of GTSAM and explicit tube-compliance behavior from constrained formulations."

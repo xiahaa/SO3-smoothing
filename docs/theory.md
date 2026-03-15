@@ -7,7 +7,7 @@
 **在 SO(3) 上的有界噪声（unknown-but-bounded）平滑 / set-membership smoother：输出一条轨迹，保证始终落在观测不确定性管道（tube）内，同时最小化角速度/角加速度能量。**
 
 这不是换个说法而已——它在控制与估计里有清晰的理论传统：set-membership 的核心就是“不假设噪声分布，只假设有界”，输出一个保证包含真值的估计集合/轨迹。([Springer][2])
-你现在的 hard constraint (d(R(t_i),R_i)\le\epsilon_i) 天然就是 set-membership 语义，但你稿子里没有把它升格为“范式贡献”，导致看起来像“把数据项换成约束”。
+你现在的 bounded-error tube constraint (d(R(t_i),R_i)\le\epsilon_i) 天然就是 set-membership 语义，但你稿子里没有把它升格为“范式贡献”，导致看起来像“把数据项换成约束”。
 
 ### 你需要补上的“硬贡献”（否则还是像换皮）
 
@@ -28,7 +28,7 @@
 
 ### 实验应该怎么做才“像 set-membership”
 
-* 报告 **硬约束满足率**：max violation、mean violation（理想是严格 0 或数值容差级）。
+* 报告 **tube-compliance 指标**：max tube excess、mean tube excess（理想是严格 0 或数值容差级）。
 * 做 **bounded noise / outlier** 场景：
 
   * bounded 情况下你保证可行且更平滑；
@@ -291,7 +291,7 @@ B) correctness 验证
 C) benchmark
 - 写一个 benchmark 脚本：
   M = 1e3, 1e4, 5e4 逐步增大
-  输出：每轮外层耗时、内层 ADMM 平均迭代数、总耗时、max violation、平滑指标（速度/加速度 RMS）
+  输出：每轮外层耗时、内层 ADMM 平均迭代数、总耗时、max tube excess、平滑指标（速度/加速度 RMS）
   并与 “CVXPY+SCS” 作为对照（仅在 M<=2000 时跑得动就行）。
 
 D) 工程细节（必须注意）

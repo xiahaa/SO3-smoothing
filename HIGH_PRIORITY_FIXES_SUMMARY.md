@@ -47,7 +47,7 @@ Tolerance: 10^-4 best for real-time (100% convergence)
    - Proof sketch provided
 
 3. **Lemma 2: Linearization Error Bound**
-   - Bounds constraint violation due to linearization
+   - Bounds tube excess due to linearization
    - $|c_i(\phi + \delta) - \tilde{c}_i(\delta)| \leq \frac{L_J}{2} \|\delta\|^2$
 
 4. **Theorem 2: Feasibility Guarantee**
@@ -77,7 +77,7 @@ Tolerance: 10^-4 best for real-time (100% convergence)
 
 **Results (M=200, 5 seeds):**
 
-| Method | Runtime | GT Error | Max Viol | Feasible |
+| Method | Runtime | GT Error | Tube Excess | Feasible |
 |--------|---------|----------|----------|----------|
 | Unconstrained | 0.01s | 0.9235 rad | 1.5200 rad | 1% |
 | Single-Pass | 0.06s | 0.0696 rad | 0.0021 rad | 87% |

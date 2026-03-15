@@ -13,7 +13,8 @@ import numpy as np
 from pathlib import Path
 
 from smoother_fast import tube_smooth_fast
-from so3 import exp_so3, log_so3, geodesic_angle
+from noise_models import set_bounded_noise_from_imu_specs
+from so3 import log_so3, geodesic_angle
 
 
 def load_euroc_ground_truth(csv_path: str, max_samples: int = None):
@@ -51,24 +52,25 @@ def load_euroc_ground_truth(csv_path: str, max_samples: int = None):
     return np.array(timestamps), np.array(R_gt)
 
 
-def simulate_imu_measurements(R_gt: np.ndarray, timestamps: np.ndarray, 
-                               noise_sigma: float = 0.02, seed: int = 42):
-    """Simulate IMU measurements with bounded noise."""
-    rng = np.random.default_rng(seed)
-    M = len(R_gt)
-    
-    # Add right-multiplied noise
-    R_meas = []
-    for i in range(M):
-        noise_angle = rng.normal(0, noise_sigma, size=3)
-        R_noise = exp_so3(noise_angle)
-        R_meas.append(R_noise @ R_gt[i])
-    
-    R_meas = np.array(R_meas)
-    
-    # Set tube radii based on noise level (3-sigma)
-    eps = np.full(M, 3 * noise_sigma)
-    
+def simulate_imu_measurements(
+    R_gt: np.ndarray,
+    dt: float,
+    gyro_noise_density: float = 0.28,
+    gyro_bias_sigma: float = 0.02,
+    calibration_sigma: float = 0.002,
+    confidence_scale: float = 3.0,
+    seed: int = 42,
+):
+    """Simulate bounded-error attitude measurements from IMU-style specs."""
+    R_meas, eps = set_bounded_noise_from_imu_specs(
+        R_seq=R_gt,
+        dt=dt,
+        gyro_noise_density=gyro_noise_density,
+        gyro_bias_sigma=gyro_bias_sigma,
+        calibration_sigma=calibration_sigma,
+        confidence_scale=confidence_scale,
+        seed=seed,
+    )
     return R_meas, eps
 
 
@@ -84,13 +86,39 @@ def run_euroc_sequence(sequence_name: str, csv_path: str,
     timestamps, R_gt = load_euroc_ground_truth(csv_path, max_samples)
     M = len(R_gt)
     print(f"  Loaded {M} samples")
+
+    # Compute time step (approximate)
+    dt = float(np.median(np.diff(timestamps)) * 1e-9)  # Convert ns to s
+    print(f"  Approximate time step: {dt:.4f}s ({1/dt:.1f} Hz)")
+
+    # Bound-construction parameters used to derive per-sample tube radii.
+    bound_cfg = {
+        "gyro_noise_density": 0.28,
+        "gyro_bias_sigma": 0.02,
+        "calibration_sigma": 0.002,
+        "confidence_scale": 3.0,
+    }
     
     # Simulate IMU measurements
-    R_meas, eps = simulate_imu_measurements(R_gt, timestamps)
-    
-    # Compute time step (approximate)
-    dt = np.median(np.diff(timestamps)) * 1e-9  # Convert ns to s
-    print(f"  Approximate time step: {dt:.4f}s ({1/dt:.1f} Hz)")
+    R_meas, eps = simulate_imu_measurements(
+        R_gt=R_gt,
+        dt=dt,
+        gyro_noise_density=bound_cfg["gyro_noise_density"],
+        gyro_bias_sigma=bound_cfg["gyro_bias_sigma"],
+        calibration_sigma=bound_cfg["calibration_sigma"],
+        confidence_scale=bound_cfg["confidence_scale"],
+    )
+    print(
+        "  Tube model: eps = kappa * sqrt((sigma_g*sqrt(dt))^2 + "
+        "(sigma_b*dt)^2 + sigma_c^2)"
+    )
+    print(
+        "  Bound params: "
+        f"sigma_g={bound_cfg['gyro_noise_density']:.3f}, "
+        f"sigma_b={bound_cfg['gyro_bias_sigma']:.3f}, "
+        f"sigma_c={bound_cfg['calibration_sigma']:.3f}, "
+        f"kappa={bound_cfg['confidence_scale']:.1f}"
+    )
     
     # Run smoothing
     print("Running tube smoothing...")
@@ -114,8 +142,9 @@ def run_euroc_sequence(sequence_name: str, csv_path: str,
         geodesic_angle(R_meas[i], R_hat[i]) - eps[i]
         for i in range(M)
     ])
-    max_violation = float(np.max(violations))
-    avg_violation = float(np.mean(np.maximum(violations, 0)))
+    tube_excess = float(np.max(violations))
+    avg_tube_excess = float(np.mean(np.maximum(violations, 0)))
+    feasible_rate = float(np.mean(violations <= 1e-6))
     
     # Ground truth error
     gt_errors = np.array([
@@ -134,18 +163,27 @@ def run_euroc_sequence(sequence_name: str, csv_path: str,
         'sequence': sequence_name,
         'M': M,
         'time_step': dt,
+        'bound_model': {
+            **bound_cfg,
+            'formula': "eps = kappa * sqrt((sigma_g*sqrt(dt))^2 + (sigma_b*dt)^2 + sigma_c^2)",
+        },
         'runtime': elapsed,
         'outer_iter': info['outer_iter'],
         'converged': info['converged'],
-        'max_violation': max_violation,
-        'avg_violation': avg_violation,
+        'tube_excess': tube_excess,
+        'avg_tube_excess': avg_tube_excess,
+        'feasible_rate': feasible_rate,
+        # Backward-compatible keys for existing scripts/paper tooling.
+        'max_violation': tube_excess,
+        'avg_violation': avg_tube_excess,
         'gt_error_rms': gt_error_rms,
         'gt_error_max': gt_error_max,
         'acc_rms': acc_rms,
     }
     
     print(f"\n  Results:")
-    print(f"    Max violation: {max_violation:.4f} rad (threshold: {eps[0]:.4f})")
+    print(f"    Max tube excess: {tube_excess:.4f} rad (tube radius: {eps[0]:.4f})")
+    print(f"    Feasible rate: {100.0 * feasible_rate:.1f}%")
     print(f"    GT error RMS: {gt_error_rms:.4f} rad")
     print(f"    Acceleration RMS: {acc_rms:.4f} rad/s²")
     
@@ -204,13 +242,13 @@ def main():
     print(r"\begin{tabular}{l c c c c}")
     print(r"\hline")
     print(r"\textbf{Sequence} & \textbf{Runtime (s)} & \textbf{GT Error (rad)} & "
-          r"\textbf{Max Violation} & \textbf{Converged} \\")
+          r"\textbf{Tube Excess} & \textbf{Feasible Rate} \\")
     print(r"\hline")
     
     for r in all_results:
         seq = r['sequence'].replace('_', r'\_')
         print(f"{seq} & {r['runtime']:.2f} & {r['gt_error_rms']:.4f} & "
-              f"{r['max_violation']:.4f} & {'Yes' if r['converged'] else 'No'} \\")
+              f"{r['tube_excess']:.4f} & {100.0 * r['feasible_rate']:.0f}\\% \\")
     
     print(r"\hline")
     print(r"\end{tabular}")

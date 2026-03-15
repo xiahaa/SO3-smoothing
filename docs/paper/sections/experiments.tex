@@ -1,18 +1,18 @@
 \section{Experiments}
 
-In this section, we describe our experimental methodology for evaluating the SO(3) tube smoothing algorithm. We design experiments to validate both the theoretical guarantees and practical performance on both synthetic and real-world datasets.
+In this section, we describe our experimental methodology for evaluating the SO(3) tube smoothing algorithm. We design experiments to validate both the supporting analysis and practical performance on both synthetic and real-world datasets.
 
 \subsection{Experimental Setup}
 
 \textbf{Evaluation Metrics:} We use four primary metrics to assess algorithm performance:
 
 \begin{itemize}
-\item \textit{Tube Constraint Satisfaction:} Maximum and average constraint violation:
+\item \textit{Tube Constraint Satisfaction:} Maximum and average tube excess:
 \begin{equation}
-\text{violation}_{\text{max}} = \max_{i=0}^{N-1} \left( \left\| \log(R_i^T \hat{R}_i) \right\|_2 - \epsilon_i \right)
+\text{tube\_excess}_{\text{max}} = \max_{i=0}^{N-1} \left( \left\| \log(R_i^T \hat{R}_i) \right\|_2 - \epsilon_i \right)
 \end{equation}
 \begin{equation}
-\text{violation}_{\text{avg}} = \frac{1}{N} \sum_{i=0}^{N-1} \max\left( \left\| \log(R_i^T \hat{R}_i) \right\|_2 - \epsilon_i, 0 \right)
+\text{tube\_excess}_{\text{avg}} = \frac{1}{N} \sum_{i=0}^{N-1} \max\left( \left\| \log(R_i^T \hat{R}_i) \right\|_2 - \epsilon_i, 0 \right)
 \end{equation}
 
 \item \textit{Geodesic Error:} Angular distance to ground truth (when available):
@@ -35,7 +35,7 @@ In this section, we describe our experimental methodology for evaluating the SO(
 
 \subsection{Synthetic Bounded-Noise Experiments}
 
-We design synthetic experiments to validate theoretical properties and demonstrate feasibility guarantees.
+We design synthetic experiments to validate theoretical properties and demonstrate practical tube compliance.
 
 \textbf{Experiment 1: Feasibility Verification.} We generate smooth ground-truth trajectories with controlled noise levels and set tube radii $\epsilon_i$ such that:
 \begin{equation}
@@ -45,7 +45,7 @@ where $\delta_{\text{margin}} = 0.05$ rad provides safety margin. This ensures f
 
 We evaluate:
 \begin{itemize}
-\item \textbf{Constraint satisfaction:} Maximum violation across all samples
+\item \textbf{Tube compliance:} Maximum tube excess across all samples
 \item \textbf{Algorithm convergence:} Number of outer iterations to reach $\|\delta\|_\infty < 10^{-6}$
 \item \textbf{Warm-starting impact:} Comparison with and without warm-starting on consecutive smoothing problems
 \end{itemize}
@@ -113,7 +113,7 @@ We implement the following baselines for fair comparison:
 \begin{equation}
 \min_\phi E(\phi) = \frac{\lambda}{2\tau}\sum_{i=0}^{N-2} \|\phi_{i+1} - \phi_i\|_2^2 + \frac{\mu}{2\tau^3}\sum_{i=1}^{N-2} \|\phi_{i-1} - 2\phi_i + \phi_{i+1}\|_2^2
 \end{equation}
-This provides optimal smoothness but no feasibility guarantees.
+This provides optimal smoothness but no explicit tube-compliance guarantees.
 
 \textbf{Method 2: SOCP Baseline.} Uses CVXPY to solve the same problem formulation as our method, but without exploiting block-banded structure. Solvers:
 \begin{itemize}

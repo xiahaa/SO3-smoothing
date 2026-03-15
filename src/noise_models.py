@@ -12,6 +12,54 @@ from typing import Tuple, Optional
 from so3 import exp_so3, batch_log
 
 
+def derive_tube_radii_from_imu_specs(
+    num_samples: int,
+    dt: float,
+    gyro_noise_density: float,
+    gyro_bias_sigma: float = 0.0,
+    confidence_scale: float = 3.0,
+    calibration_sigma: float = 0.0,
+    floor: float = 1e-4,
+) -> np.ndarray:
+    """Compute per-sample geodesic tube radii from simple IMU uncertainty specs.
+
+    The model combines:
+    - angle random walk from gyro white noise: ``sigma_rw = noise_density * sqrt(dt)``
+    - slowly varying bias contribution over one step: ``sigma_bias = bias_sigma * dt``
+    - static calibration uncertainty term: ``calibration_sigma``
+
+    Args:
+        num_samples: Number of trajectory samples.
+        dt: Sampling period in seconds.
+        gyro_noise_density: Gyro white-noise density [rad/s/sqrt(Hz)].
+        gyro_bias_sigma: Per-axis gyro bias uncertainty [rad/s].
+        confidence_scale: Multiplicative confidence factor (e.g., 3.0 for ~3-sigma).
+        calibration_sigma: Static calibration uncertainty term [rad].
+        floor: Minimum tube radius [rad] to avoid degenerate constraints.
+
+    Returns:
+        eps: Tube radii array of shape (num_samples,).
+    """
+    if num_samples <= 0:
+        raise ValueError("num_samples must be positive")
+    if dt <= 0.0:
+        raise ValueError("dt must be positive")
+    if gyro_noise_density < 0.0:
+        raise ValueError("gyro_noise_density must be nonnegative")
+    if gyro_bias_sigma < 0.0:
+        raise ValueError("gyro_bias_sigma must be nonnegative")
+    if calibration_sigma < 0.0:
+        raise ValueError("calibration_sigma must be nonnegative")
+    if confidence_scale <= 0.0:
+        raise ValueError("confidence_scale must be positive")
+
+    sigma_rw = gyro_noise_density * np.sqrt(dt)
+    sigma_bias = gyro_bias_sigma * dt
+    sigma_total = np.sqrt(sigma_rw * sigma_rw + sigma_bias * sigma_bias + calibration_sigma * calibration_sigma)
+    eps_scalar = max(floor, confidence_scale * sigma_total)
+    return np.full(num_samples, eps_scalar, dtype=np.float64)
+
+
 def add_gaussian_rotation_noise(
     R_seq: np.ndarray,
     sigma: float,
@@ -136,6 +184,48 @@ def set_bounded_noise(
     R_noisy = np.array([R_seq[i] @ exp_so3(controlled_noise[i]) for i in range(N)], dtype=np.float64)
 
     return R_noisy, eps
+
+
+def set_bounded_noise_from_imu_specs(
+    R_seq: np.ndarray,
+    dt: float,
+    gyro_noise_density: float,
+    gyro_bias_sigma: float = 0.0,
+    calibration_sigma: float = 0.0,
+    confidence_scale: float = 3.0,
+    seed: int = 0,
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Generate noisy measurements and sensor-spec-derived tube radii.
+
+    Args:
+        R_seq: Original rotations, shape (N, 3, 3).
+        dt: Sampling period in seconds.
+        gyro_noise_density: Gyro noise density [rad/s/sqrt(Hz)].
+        gyro_bias_sigma: Gyro bias uncertainty [rad/s].
+        calibration_sigma: Calibration uncertainty contribution [rad].
+        confidence_scale: Confidence multiplier for tube radius.
+        seed: Random seed for reproducibility.
+
+    Returns:
+        R_meas: Noisy measurements, shape (N, 3, 3).
+        eps: Tube radii derived from IMU specs, shape (N,).
+    """
+    N = int(R_seq.shape[0])
+    step_sigma = np.sqrt(
+        (gyro_noise_density * np.sqrt(dt)) ** 2
+        + (gyro_bias_sigma * dt) ** 2
+        + calibration_sigma ** 2
+    )
+    R_meas = add_gaussian_rotation_noise(R_seq, sigma=step_sigma, seed=seed)
+    eps = derive_tube_radii_from_imu_specs(
+        num_samples=N,
+        dt=dt,
+        gyro_noise_density=gyro_noise_density,
+        gyro_bias_sigma=gyro_bias_sigma,
+        confidence_scale=confidence_scale,
+        calibration_sigma=calibration_sigma,
+    )
+    return R_meas, eps
 
 
 def generate_controlled_synthetic(

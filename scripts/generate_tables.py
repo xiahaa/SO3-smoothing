@@ -62,12 +62,12 @@ Dataset & M & ADMM (s) & SOCP (s) & Speedup \\\\
 def format_accuracy_table(results: List[Dict[str, Any]]) -> str:
     """Generate LaTeX table for accuracy metrics."""
     latex = """\\begin{table}[htbp]
-\\caption{Accuracy metrics: GT error and constraint violation.}
+\\caption{Accuracy metrics: GT error and tube excess.}
 \\label{tab:accuracy}
 \\centering
 \\begin{tabular}{lcccc}
 \\toprule
-Dataset & Method & GT Error (rad) & Max Viol (rad) & Avg Viol (rad) \\\\
+Dataset & Method & GT Error (rad) & Tube Excess (rad) & Avg Tube Excess (rad) \\\\
 \\midrule
 """
 
@@ -80,10 +80,10 @@ Dataset & Method & GT Error (rad) & Max Viol (rad) & Avg Viol (rad) \\\\
 
     for ds_name, ds_results in sorted(datasets.items()):
         for r in ds_results:
-            if 'method' in r and 'max_violation' in r:
+            if 'method' in r and ('tube_excess' in r or 'max_violation' in r):
                 gt_error = r.get('gt_error_rms', float('nan'))
-                max_viol = r['max_violation']
-                avg_viol = r.get('avg_violation', 0.0)
+                max_viol = r.get('tube_excess', r.get('max_violation', float('nan')))
+                avg_viol = r.get('avg_tube_excess', r.get('avg_violation', 0.0))
                 latex += f"{ds_name} & {r['method']} & {gt_error:.4f} & {max_viol:.4f} & {avg_viol:.4f} \\\\\n"
 
     latex += """\\bottomrule
